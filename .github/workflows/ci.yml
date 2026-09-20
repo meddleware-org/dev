@@ -54,7 +54,7 @@ jobs:
             --accept 200,206,429
             --root-dir docs
             docs/**/*.md
-          fail: false
+          fail: true
 
   # Scheduled / manual: blocking external-link sweep. Dead external links fail here, out of band.
   external-links:
