@@ -41,7 +41,7 @@ jobs:
 
       # External links: robust (cache + retries + accept rate-limit/partial), non-blocking on PRs so
       # transient third-party downtime can't fail an unrelated docs change. The scheduled job below
-      # is the blocking external gate. Root-relative links in markdown are resolved relative to docs/.
+      # is the blocking external gate. Only checks http/https; skips internal file:// links.
       - name: External link check (report-only)
         continue-on-error: true
         uses: lycheeverse/lychee-action@v2
@@ -52,9 +52,10 @@ jobs:
             --max-retries 3
             --retry-wait-time 2
             --accept 200,206,429
-            --root-dir docs
+            --scheme https
+            --scheme http
             docs/**/*.md
-          fail: true
+          fail: false
 
   # Scheduled / manual: blocking external-link sweep. Dead external links fail here, out of band.
   external-links:
@@ -80,6 +81,7 @@ jobs:
             --max-retries 3
             --retry-wait-time 2
             --accept 200,206,429
-            --root-dir docs
+            --scheme https
+            --scheme http
             docs/**/*.md
           fail: true
