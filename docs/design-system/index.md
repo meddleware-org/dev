@@ -1,0 +1,64 @@
+# Design system
+
+The Meddleware design system is two packages:
+
+- **`@meddleware/design-tokens`** — CSS custom properties, JSON token tree, and TypeScript exports. The source of truth for colours, spacing, type scale, and motion.
+- **`@meddleware/ui`** — Vue 3 component library (layout shell, primitives, colour-mode control) built entirely on the token layer.
+
+## Quick start
+
+```bash
+npm install @meddleware/design-tokens @meddleware/ui
+```
+
+Import the CSS once at your app entry point:
+
+```ts
+// src/main.ts
+import '@meddleware/design-tokens/tokens.css'   // required — registers CSS custom properties
+import '@meddleware/design-tokens/seasons.css'  // optional — data-season="spring|summer|autumn|winter"
+import '@meddleware/ui/base.css'                // optional — element defaults + scale + utilities
+import { createApp } from 'vue'
+import App from './App.vue'
+
+createApp(App).mount('#app')
+```
+
+## Philosophy
+
+The design system is guided by three principles:
+
+1. **Design recedes** — structure is invisible (sacred-geometry scales, φ/Fibonacci spacing). No decorative chrome.
+2. **Primary colours as functional accents** — red = accent/action, blue = secondary/info, yellow = warning, green = ok. No gold or purple as identity marks.
+3. **Controlled imperfection** — subtle noise, asymmetric spacing hooks, human easing. Machines are smooth; the design has texture.
+
+## Token layers
+
+| Layer | Purpose | Example |
+| --- | --- | --- |
+| Palette ramps | Colour-named; expandable swatches | `--mw-red-500`, `--mw-blue-300` |
+| Semantic roles | Colour-agnostic; what components use | `--accent`, `--warning`, `--focus-ring` |
+| Sacred-geometry scales | φ/Fibonacci spacing and type | `--space-md`, `--font-size-lg` |
+| Panel palettes | Theme-independent (for shell variants) | `--mw-panel-dark-bg` |
+| Chaos/motion | Noise, asymmetry, transitions | `--noise-overlay`, `--transition-base` |
+
+See [Design tokens](./tokens) for full usage, and [Components](./components) for the component API.
+
+## Light / dark mode
+
+`useColorMode` from `@meddleware/ui` manages the `data-theme="dark"` attribute on `<html>` and persists to localStorage. All semantic tokens flip automatically.
+
+```vue
+<script setup>
+import { AppHeader, ColorModeControl, useColorMode } from '@meddleware/ui'
+const { mode } = useColorMode()
+</script>
+
+<template>
+  <AppHeader variant="dark">
+    <template #actions>
+      <ColorModeControl v-model="mode" />
+    </template>
+  </AppHeader>
+</template>
+```
