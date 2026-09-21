@@ -1,63 +1,56 @@
 /*
  * Meddleware brand overrides for the VitePress default theme.
- * Brand = the functional primaries from @meddleware/design-tokens (red accent + blue), so the
- * dev docs track the apps. No gold/purple (design philosophy: primary/rainbow accents as human
- * universals, not royalty/priesthood signalling).
+ * Brand = the naturalistic triadic palette from @meddleware/design-tokens (terracotta accent,
+ * moss primary, slate secondary), so the dev docs track the apps. Breaking the red/blue binary
+ * with earth-derived colours that appear together in nature.
  */
 
 :root {
-  /* Brand = primary red (mirrors --accent in the apps). */
-  --vp-c-brand-1: var(--mw-red-500);
-  --vp-c-brand-2: var(--mw-red-300);
-  --vp-c-brand-3: var(--mw-red-300);
-  --vp-c-brand-soft: color-mix(in srgb, var(--mw-red-500) 14%, transparent);
+  /* Brand = primary terracotta (mirrors --accent in the apps). */
+  --vp-c-brand-1: var(--mw-terracotta-500);
+  --vp-c-brand-2: var(--mw-terracotta-300);
+  --vp-c-brand-3: var(--mw-terracotta-600);
+  --vp-c-brand-soft: rgba(184, 69, 39, 0.14);
 
-  /* Home hero: red → blue wash, warm (orange) glow — no gold. */
+  /* Home hero: terracotta → moss wash (earth-derived triad). */
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: linear-gradient(
-    120deg,
-    var(--mw-red-500),
-    var(--mw-blue-500)
+    135deg,
+    var(--mw-terracotta-500),
+    var(--mw-moss-500)
   );
   --vp-home-hero-image-background-image: linear-gradient(
-    120deg,
-    var(--mw-red-300),
-    var(--mw-orange-500)
+    135deg,
+    var(--mw-terracotta-300),
+    var(--mw-moss-500)
   );
   --vp-home-hero-image-filter: blur(44px);
 }
 
 .dark {
-  /* Dark mode: lightened red for legibility (mirrors --accent dark stop in tokens). */
-  --vp-c-brand-1: var(--mw-red-300);
-  --vp-c-brand-2: var(--mw-red-300);
-  --vp-c-brand-3: var(--mw-red-500);
-  --vp-c-brand-soft: color-mix(in srgb, var(--mw-red-500) 30%, transparent);
+  /* Dark mode: lightened terracotta for legibility (mirrors --accent dark stop in tokens). */
+  --vp-c-brand-1: var(--mw-terracotta-300);
+  --vp-c-brand-2: var(--mw-terracotta-500);
+  --vp-c-brand-3: var(--mw-terracotta-600);
+  --vp-c-brand-soft: rgba(224, 120, 80, 0.16);
 
   --vp-home-hero-name-background: linear-gradient(
-    120deg,
-    var(--mw-red-300),
-    var(--mw-blue-300)
+    135deg,
+    var(--mw-terracotta-300),
+    var(--mw-moss-300)
   );
   --vp-home-hero-image-background-image: linear-gradient(
-    120deg,
-    var(--mw-red-500),
-    var(--mw-orange-500)
+    135deg,
+    var(--mw-terracotta-500),
+    var(--mw-moss-300)
   );
 }
 
-/* "tip" custom blocks use the info (blue) role — functional, not gold. */
+/* "tip" custom blocks use the info (slate) role — functional, naturalistic. */
 .vp-doc .custom-block.tip {
-  border-color: var(--mw-blue-500);
+  border-color: var(--mw-slate-500);
 }
 
-/* Encouraging prompt rendered below the hero tagline on the home page (home-hero-actions-after slot). */
-.home-explore-prompt {
-  margin: 0 auto 2rem;
-  max-width: 480px;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--vp-c-brand-1);
-  line-height: 1.5;
+.dark .vp-doc .custom-block.tip {
+  border-color: var(--mw-slate-300);
 }

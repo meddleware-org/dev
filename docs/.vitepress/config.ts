@@ -23,9 +23,20 @@ export default defineConfig({
     search: { provider: 'local' },
 
     nav: [
-      { text: 'Getting started', link: '/getting-started/' },
-      { text: 'Design system', link: '/design-system/' },
-      { text: 'Sui', link: '/sui/' },
+      {
+        text: 'Web',
+        items: [
+          { text: 'Getting started', link: '/getting-started/' },
+          { text: 'Design system', link: '/design-system/' },
+        ],
+      },
+      {
+        text: 'Blockchain',
+        items: [
+          { text: 'Active', items: [{ text: 'Sui', link: '/sui/' }] },
+          { text: 'Coming soon', items: [{ text: 'More blockchains', link: '/blockchain/' }] },
+        ],
+      },
       { text: 'API reference →', link: 'https://docs.meddleware.co.uk/blockchain/sui/' },
       // TODO white-label: { text: 'Operator guides', link: '/operator/' }
     ],
