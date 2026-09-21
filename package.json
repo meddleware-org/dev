@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@meddleware/design-tokens": "^0.1.4",
-    "@meddleware/ui": "^0.1.16"
+    "@meddleware/ui": "^0.1.17"
   },
   "devDependencies": {
     "@types/node": "~24.12.2",
