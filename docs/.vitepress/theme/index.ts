@@ -4,12 +4,14 @@
 import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
 import { CopyrightLine } from '@meddleware/ui'
+import Layout from './Layout.vue'
 import '@meddleware/design-tokens/tokens.css'
 import '@meddleware/design-tokens/seasons.css'
 import './custom.css'
 
 const theme: Theme = {
   extends: DefaultTheme,
+  Layout,
   enhanceApp({ app, router: _router, siteData: _siteData }) {
     // Register CopyrightLine as a global component
     app.component('CopyrightLine', CopyrightLine)

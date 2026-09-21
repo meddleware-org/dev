@@ -54,3 +54,8 @@
 .dark .vp-doc .custom-block.tip {
   border-color: var(--mw-slate-300);
 }
+
+/* Hide the default VitePress footer; use custom Layout with CopyrightLine instead. */
+.VPFooter {
+  display: none;
+}
