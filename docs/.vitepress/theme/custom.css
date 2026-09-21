@@ -55,7 +55,8 @@
   border-color: var(--mw-slate-300);
 }
 
-/* Hide the default VitePress footer; use custom Layout with CopyrightLine instead. */
-.VPFooter {
+/* Hide only the default copyright line in the footer; CopyrightLine replaces it. */
+.VPFooter .copyright {
   display: none;
+  visibility: hidden;
 }
