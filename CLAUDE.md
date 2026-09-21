@@ -43,7 +43,7 @@ Do not remove these annotations. Do not add rendered white-label content.
 | SDK install, integration code, self-host | `repos/dev/` → `dev.meddleware.co.uk` |
 | TypeDoc API reference | `repos/docs/` → `docs.meddleware.co.uk/blockchain/sui/` |
 
-Cross-links: `dev.` nav has "API reference →" pointing to `docs.`; `docs.` service reference pages have `:::tip` callouts into `dev.`.
+Cross-links: `dev.` nav has "API reference" pointing to `docs.`; `docs.` service reference pages have `:::tip` callouts into `dev.`.
 
 ## Sister site
 

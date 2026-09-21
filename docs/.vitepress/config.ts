@@ -38,7 +38,7 @@ export default defineConfig({
           { text: 'Coming soon', items: [{ text: 'More blockchains', link: '/blockchain/' }] },
         ],
       },
-      { text: 'API reference →', link: 'https://docs.meddleware.co.uk/blockchain/sui/' },
+      { text: 'API reference', link: 'https://docs.meddleware.co.uk/blockchain/sui/' },
       // TODO white-label: { text: 'Operator guides', link: '/operator/' }
     ],
 
