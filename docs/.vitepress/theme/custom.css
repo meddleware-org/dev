@@ -55,8 +55,7 @@
   border-color: var(--mw-slate-300);
 }
 
-/* Hide only the default copyright line in the footer; CopyrightLine replaces it. */
-.VPFooter .copyright {
-  display: none;
-  visibility: hidden;
+/* Override UI package body styles to use VitePress theme colors. */
+body {
+  background-color: var(--vp-c-bg);
 }

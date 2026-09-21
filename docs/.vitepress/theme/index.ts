@@ -7,6 +7,7 @@ import { CopyrightLine } from '@meddleware/ui'
 import Layout from './Layout.vue'
 import '@meddleware/design-tokens/tokens.css'
 import '@meddleware/design-tokens/seasons.css'
+import '@meddleware/ui/base.css'
 import './custom.css'
 
 const theme: Theme = {

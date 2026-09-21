@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AppFooter } from '@meddleware/ui';
 import DefaultTheme from 'vitepress/theme'
 
 const { Layout } = DefaultTheme
@@ -7,7 +8,9 @@ const { Layout } = DefaultTheme
 <template>
   <Layout>
     <template #layout-bottom>
-      <CopyrightLine symbolVariant="kopimi" organisation-name="Meddleware" rightsStatement="jam" />
+      <AppFooter>
+        <CopyrightLine symbolVariant="kopimi" organisation-name="Meddleware" rightsStatement="jam" />
+      </AppFooter>
     </template>
   </Layout>
 </template>

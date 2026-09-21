@@ -25,8 +25,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@meddleware/design-tokens": "^0.1.4",
-    "@meddleware/ui": "^0.1.17"
+    "@meddleware/design-tokens": "^0.1.5",
+    "@meddleware/ui": "^0.1.19"
   },
   "devDependencies": {
     "@types/node": "~24.12.2",
