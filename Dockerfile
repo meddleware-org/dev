@@ -14,7 +14,7 @@ COPY . .
 RUN npm run build
 
 # ── runtime stage ─────────────────────────────────────────────────────────────
-FROM quay.io/meddleware-org/static-server:0.1.0
+FROM quay.io/meddleware-org/static-server:0.1.1
 
 COPY --from=build /app/dist /app/public
 

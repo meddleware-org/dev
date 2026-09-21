@@ -1,6 +1,6 @@
 {
   "name": "@meddleware/dev",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
