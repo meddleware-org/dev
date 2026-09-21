@@ -1,16 +1,19 @@
 // Dev theme = VitePress default theme + Meddleware brand overrides.
 // The design-token CSS is imported so the palette stays in lockstep with the apps; custom.css
 // maps VitePress's --vp-c-brand-* onto the functional primary ramps from design-tokens.
-import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
+import { CopyrightLine } from '@meddleware/ui'
 import '@meddleware/design-tokens/tokens.css'
 import '@meddleware/design-tokens/seasons.css'
 import './custom.css'
 
 const theme: Theme = {
   extends: DefaultTheme,
-  enhanceApp({ app: _app, router: _router, siteData: _siteData }) {
+  enhanceApp({ app, router: _router, siteData: _siteData }) {
+    // Register CopyrightLine as a global component
+    app.component('CopyrightLine', CopyrightLine)
+
     if (typeof document !== 'undefined') {
       const m = new Date().getMonth();
       document.documentElement.dataset.season =

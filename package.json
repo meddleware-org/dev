@@ -1,6 +1,6 @@
 {
   "name": "@meddleware/dev",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
@@ -25,7 +25,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@meddleware/design-tokens": "^0.1.3"
+    "@meddleware/design-tokens": "^0.1.4",
+    "@meddleware/ui": "^0.1.16"
   },
   "devDependencies": {
     "@types/node": "~24.12.2",

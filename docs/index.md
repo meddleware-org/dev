@@ -40,5 +40,9 @@ features:
   - title: API reference
     details: Full TypeDoc SDK reference lives in the user docs — every exported function, type, and class.
     link: https://docs.meddleware.co.uk/blockchain/sui/
-    linkText: API reference →
+    linkText: API reference
 ---
+
+<div class="vp-doc" style="padding-top: 2rem; border-top: 1px solid var(--border); margin-top: 3rem; text-align: center;">
+  <CopyrightLine symbolVariant="kopimi" organisation-name="Meddleware" rightsStatement="jam" />
+</div>
