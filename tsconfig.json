@@ -9,5 +9,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["docs/.vitepress/**/*.ts"]
+  "include": ["env.d.ts", "docs/.vitepress/**/*.ts", "docs/.vitepress/**/*.vue"]
 }
