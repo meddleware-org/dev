@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitepress'
 import { fileURLToPath } from 'node:url'
-import { CopyrightLine } from '@meddleware/ui'
 
 // Developer documentation for the Meddleware platform. Integration guides, design-system usage,
 // self-host runbooks, and Sui development patterns. User-facing product docs live at docs.meddleware.co.uk.

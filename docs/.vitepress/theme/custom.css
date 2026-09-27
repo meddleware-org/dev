@@ -10,7 +10,7 @@
   --vp-c-brand-1: var(--mw-terracotta-500);
   --vp-c-brand-2: var(--mw-terracotta-300);
   --vp-c-brand-3: var(--mw-terracotta-600);
-  --vp-c-brand-soft: rgba(184, 69, 39, 0.14);
+  --vp-c-brand-soft: rgb(184 69 39 / 14%);
 
   /* Home hero: terracotta → moss wash (earth-derived triad). */
   --vp-home-hero-name-color: transparent;
@@ -32,7 +32,7 @@
   --vp-c-brand-1: var(--mw-terracotta-300);
   --vp-c-brand-2: var(--mw-terracotta-500);
   --vp-c-brand-3: var(--mw-terracotta-600);
-  --vp-c-brand-soft: rgba(224, 120, 80, 0.16);
+  --vp-c-brand-soft: rgb(224 120 80 / 16%);
 
   --vp-home-hero-name-background: linear-gradient(
     135deg,
