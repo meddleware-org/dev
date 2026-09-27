@@ -40,6 +40,9 @@ jobs:
       - name: Lint JS (eslint + vuejs-a11y)
         run: npm run lint:js --if-present
 
+      - name: Lint HTML (html-validate)
+        run: npm run lint:html --if-present
+
       # `vitepress build` fails on dead INTERNAL links by default (ignoreDeadLinks unset), so this
       # step is the internal-strict link gate.
       - name: Build (internal-strict dead-link detection)
