@@ -1,127 +1,119 @@
 # Walrus Storage — Integration guide
 
-## Upload with progress
+All examples use a client from [`createWalrusClient`](./#create-a-client) and an executor `exec`
+that signs and executes a `Transaction` (in a Vue app: `buildExecutor()` from
+`@meddleware/wallet-adapter`).
+
+## Uploading through the NFT-gated relay
+
+Meddleware's relay, `https://sui-walrus-relay-testnet.meddleware.co.uk`, is the Mysten
+`walrus-upload-relay` behind an [nft-gate gateway](/sui/access-gate/gateway). Uploads need a
+wallet-signed access proof; `GET /v1/tip-config` is public.
+
+The testnet gateway runs in **single-use** mode: each upload spends one use of an access pass, so
+the proof must carry the digest of an on-chain `consume` bound to the gateway's challenge nonce:
 
 ```ts
-import { WalrusRelayClient } from '@meddleware/walrus-client'
+import { buildConsumeTx, fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
+import { createWalrusClient } from '@meddleware/walrus-client'
 
-async function uploadFile(
-  walrus: WalrusRelayClient,
-  file: File,
-  epochs = 5,
-  onProgress?: (pct: number) => void,
-): Promise<string> {
-  const result = await walrus.store(file, {
-    epochs,
-    onProgress,
-  })
-  return result.blobId
-}
-```
+const RELAY = 'https://sui-walrus-relay-testnet.meddleware.co.uk'
 
-## Upload with wallet signing (gated relay)
+// 1. Fresh challenge from the gateway
+const challenge = await fetchChallenge(RELAY)
 
-When the relay requires an NFT gate proof, supply a `Transaction` signer:
+// 2. Spend one use on-chain, binding it to that nonce (one wallet approval)
+const consume = await exec.signAndExecute(buildConsumeTx(gateConfig, passId, challenge.nonce))
+await exec.waitForTransaction(consume.digest)
 
-```ts
-import { useSignAndExecuteTransaction, useCurrentAccount } from '@mysten/dapp-kit'
-
-const account = useCurrentAccount()
-const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction()
-
-const result = await walrus.store(file, {
-  epochs: 5,
-  signer: {
-    address: account.value!.address,
-    signAndExecute: (tx) => signAndExecute({ transaction: tx }),
-  },
+// 3. Sign the challenge and attach the consume digest
+const token = await buildAccessProof({
+  address,
+  challenge,
+  sign: (message) => wallet.signPersonalMessage({ message }),
+  consumeDigest: consume.digest,
 })
+
+// 4. Upload through the relay with the token
+const walrus = createWalrusClient({
+  network: 'testnet',
+  wasmUrl,
+  uploadRelayHost: RELAY,
+  uploadRelayAuthToken: token,
+})
+// …then createBlobUploadFlow / createUploadFlow as in the SDK setup page
 ```
 
-The client registers a fresh nonce with the relay, constructs the access-gate proof, submits the transaction, and then uploads the blob — all transparently.
+For a gateway **without** single-use mode, skip step 2 and use the one-call helper
+`createRelayAccessToken({ relayHost, address, sign })` from `@meddleware/walrus-client`.
 
-## Read a blob
+`gateConfig` is the `AccessGateConfig` (`{ packageId, gateId, platformConfigId, nftType, soulbound }`)
+of the gate the relay checks, and `passId` a pass the wallet holds for it (see
+[Access Gate](/sui/access-gate/)). The ready-made Vue implementation of this flow is
+`useAccessGate().consumeAndBuildToken` in
+[`@meddleware/walrus-relay`](https://www.npmjs.com/package/@meddleware/walrus-relay).
+
+### Tips
+
+The relay charges a tip on each upload, paid inside the register transaction. Read the schedule from
+`GET /v1/tip-config` (`parseTipFromConfig` in `@meddleware/walrus-relay` extracts it), and cap what
+the client will pay with `uploadRelayMaxTipMist`. The tip and a per-attempt nonce are embedded in the
+register transaction, so a failed attempt is retried with a **fresh** flow — never by resuming an old
+registration.
+
+## Extend a blob's lifetime
 
 ```ts
-const data = await walrus.read(blobId)
+import { extendBlobLifetimeTransaction } from '@meddleware/walrus-client'
 
-// As a Blob for download
-const blob = new Blob([data])
-const url  = URL.createObjectURL(blob)
+const tx = extendBlobLifetimeTransaction(walrus, blobObjectId, { epochs: 26 }) // or { endEpoch }
+await exec.signAndExecute(tx)
 ```
 
-## Extend blob lifetime
+`extendBlobLifetime(walrus, blobObjectId, keypair, options)` signs and executes in one call (Node.js).
+
+## Estimate storage cost
 
 ```ts
-await walrus.extend(blobId, { extraEpochs: 10, signer })
+import { estimateStorageCost } from '@meddleware/walrus-client'
+
+const { storageCost, writeCost, totalCost } = await estimateStorageCost(walrus, bytes.length, 53)
 ```
 
-## List owned blobs
+Costs are in WAL base units; an extension pays only the storage part.
+
+## List a wallet's blobs
 
 ```ts
-const blobs = await walrus.listOwned(ownerAddress)
-// BlobInfo[]: blobId, size, expiryEpoch, owner
+import { fetchOwnedWalrusBlobs } from '@meddleware/walrus-client'
+
+const blobs = await fetchOwnedWalrusBlobs(walrus, walrus, owner)
+// [{ objectId, blobId, size, endEpoch, certified }]
 ```
 
-## Tip estimation
+The first argument is any Sui client with the Core API (the Walrus client is one); the Blob type is
+resolved from the live Walrus package, so no address is hard-coded.
 
-The relay may charge a tip per upload. Estimate the tip before showing a confirmation UI:
+## Blob attributes
+
+On-chain key/value metadata on a `Blob` object:
 
 ```ts
-const estimate = await walrus.estimateTip(file.size, epochs)
-// { tipMist: bigint, relayUrl: string }
+import { setBlobAttributesTransaction, readBlobAttributes } from '@meddleware/walrus-client'
+
+await exec.signAndExecute(setBlobAttributesTransaction(walrus, blobObjectId, { 'content-type': 'image/png' }))
+const attrs = await readBlobAttributes(walrus, blobObjectId) // null when none are set
 ```
 
-Display `estimate.tipMist / 1_000_000_000n` SUI to the user.
+A `null` value deletes that attribute.
 
-## Error handling
+## Errors
 
-```ts
-try {
-  const result = await walrus.store(file, { epochs })
-} catch (err) {
-  if (err instanceof WalrusRelayError) {
-    switch (err.code) {
-      case 'RATE_LIMITED':      // relay rate limit exceeded
-      case 'INSUFFICIENT_FUNDS': // wallet balance too low
-      case 'NFT_GATE_DENIED':   // no valid access-gate pass
-      case 'RELAY_UNAVAILABLE': // relay returned 5xx
-    }
-  }
-  throw err
-}
-```
-
-## Vue composable pattern
-
-```ts
-// composables/useWalrusUpload.ts
-import { ref } from 'vue'
-import { WalrusRelayClient } from '@meddleware/walrus-client'
-
-export function useWalrusUpload(walrus: WalrusRelayClient) {
-  const uploading = ref(false)
-  const progress  = ref(0)
-  const blobId    = ref<string | null>(null)
-  const error     = ref<Error | null>(null)
-
-  async function upload(file: File, epochs = 5) {
-    uploading.value = true
-    progress.value  = 0
-    error.value     = null
-    try {
-      const result = await walrus.store(file, {
-        epochs,
-        onProgress: (pct) => { progress.value = pct },
-      })
-      blobId.value = result.blobId
-    } catch (e) {
-      error.value = e as Error
-    } finally {
-      uploading.value = false
-    }
-  }
-
-  return { uploading, progress, blobId, error, upload }
-}
-```
+- **Epoch transitions:** uploads can fail with `RetryableWalrusClientError` (re-exported by
+  `@meddleware/walrus-client`) while Walrus changes epoch — retry with a fresh flow.
+- **Gateway responses:** `401` — no proof; `403` — bad proof or signature, stale or reused nonce,
+  no matching consume, or the wallet holds no valid pass; `409` — that consume was already redeemed
+  for an upload, or one is in progress (a failed upload releases it for retry); `429` — per-address
+  rate limit; `413` — body above the gateway's `MAX_BODY_BYTES`; `502` — the gateway could not reach
+  a Sui fullnode.
+- **Reservation too long:** more than 53 epochs in one reservation aborts on-chain; extend instead.

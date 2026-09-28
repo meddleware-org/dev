@@ -1,25 +1,29 @@
 # PTB patterns
 
-Programmable Transaction Blocks (PTBs) let you compose multiple Move calls into a single atomic transaction. The Meddleware apps use PTBs for every multi-step on-chain operation.
+Programmable Transaction Blocks (PTBs) compose several Move calls into one atomic transaction. Every
+on-chain action in the Meddleware apps is a PTB built with `@mysten/sui/transactions`, most of them
+by the SDK builders (`buildPurchaseTx`, `buildCreateGateTx`, …); the patterns below are what those
+builders do.
 
 ## Basic structure
 
 ```ts
 import { Transaction } from '@mysten/sui/transactions'
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { SuiGrpcClient } from '@mysten/sui/grpc'
 
-const client = new SuiClient({ url: getFullnodeUrl('testnet') })
+const client = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
 const tx = new Transaction()
 
-// Add Move calls, object inputs, and coin splits here
+// Add Move calls, object inputs and coin splits here
 // ...
 
-// Sign and execute (with a wallet or a keypair)
+// Sign and execute with a keypair (scripts); in a browser app the wallet signs instead
 const result = await client.signAndExecuteTransaction({
   transaction: tx,
   signer: keypair,
-  options: { showEffects: true, showObjectChanges: true },
+  include: { effects: true, events: true },
 })
+await client.waitForTransaction({ result }) // before reading its effects back
 ```
 
 ## Common patterns
@@ -30,107 +34,120 @@ const result = await client.signAndExecuteTransaction({
 tx.moveCall({
   target: `${PACKAGE_ID}::${MODULE}::${FUNCTION}`,
   arguments: [
-    tx.object(objectId),          // pass an existing on-chain object
-    tx.pure.u64(1000n),           // pass a scalar
+    tx.object(objectId),            // an existing on-chain object (owned or shared)
+    tx.pure.u64(1000n),             // a scalar
     tx.pure.address(recipientAddr),
+    tx.pure.vector('u8', nonceBytes),
   ],
 })
 ```
 
 ### Splitting coins for a payment
 
+`access_gate::purchase` takes the payment as a `Coin<SUI>`; split exactly the price from gas. The
+function mints the pass to the sender and refunds any overpayment itself, so nothing needs
+transferring afterwards:
+
 ```ts
-const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(feeMist)])
+const [payment] = tx.splitCoins(tx.gas, [tx.pure.u64(priceMist)])
 tx.moveCall({
-  target: `${PACKAGE}::module::pay`,
-  arguments: [coin],
+  target: `${ACCESS_GATE_PACKAGE}::access_gate::purchase`,
+  arguments: [tx.object(GATE_ID), tx.object(PLATFORM_CONFIG_ID), payment],
 })
 ```
 
-### Multi-step composition (example: deposit → allocate)
+### Passing a result into a later call
+
+A `moveCall` returns its results; pass them as arguments to later commands in the same PTB. Creating
+a gate with a restrictive policy builds the `GatePolicy` value first:
 
 ```ts
-// 1. Split exact SUI amount
-const [depositCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountMist)])
-
-// 2. Deposit into vault (returns mwSUI shares)
-const [shares] = tx.moveCall({
-  target: `${VAULT_PACKAGE}::vault_core::deposit`,
-  arguments: [depositCoin, tx.object(VAULT_ID), tx.object(CONFIG_ID)],
+const [policy] = tx.moveCall({
+  target: `${ACCESS_GATE_PACKAGE}::access_gate::new_gate_policy`,
+  arguments: [tx.pure.bool(true), tx.pure.bool(false), tx.pure.bool(true)],
 })
-
-// 3. Transfer shares to caller (or keep for further use)
-tx.transferObjects([shares], tx.pure.address(callerAddress))
-```
-
-### Reading a result across calls
-
-Results from `moveCall` are returned as `TransactionResult` values. Pass them to subsequent calls:
-
-```ts
-const [mintedNft] = tx.moveCall({ target: `${PKG}::nft::mint`, arguments: [...] })
 tx.moveCall({
-  target: `${PKG}::vault::deposit_nft`,
-  arguments: [mintedNft],  // result used as argument
+  target: `${ACCESS_GATE_PACKAGE}::access_gate::create_gate_with_policy`,
+  arguments: [/* price, recipient, uses, soulbound, auto-burn, name, image, description */ ...values, policy],
 })
 ```
 
-## Dry-run before sending
+(`create_gate_with_policy` needs a policy-aware `access_gate` version — see its
+[API reference](/sui/onchain/access-gate/api-reference).)
+
+## Simulate before sending
+
+Simulation runs the transaction without executing it — use it to validate inputs and size gas before
+asking a wallet to sign:
 
 ```ts
-const dryRunResult = await client.dryRunTransaction({
-  transaction: await tx.build({ client }),
-})
-if (dryRunResult.effects.status.status !== 'success') {
-  console.error('Dry-run failed:', dryRunResult.effects.status.error)
+tx.setSender(address)
+const sim = await client.simulateTransaction({ transaction: tx, include: { effects: true } })
+const outcome = sim.Transaction ?? sim.FailedTransaction
+if (!outcome.status.success) {
+  console.error('Would fail:', outcome.status.error?.message)
 }
 ```
 
-## Setting gas budget
+## Gas budget
+
+Wallets and `signAndExecuteTransaction` set the budget from a simulation automatically. Set one
+explicitly only for scripts that must cap spend:
 
 ```ts
-tx.setGasBudget(20_000_000n)  // 0.02 SUI; adjust to operation complexity
+tx.setGasBudget(20_000_000n) // 0.02 SUI
 ```
 
-For complex multi-step PTBs (rebalance, multi-strategy allocation), use 100–200 MIST × number of strategy steps as a baseline and dry-run to confirm.
+## Wallet integration (Vue)
 
-## Wallet integration
-
-In a Vue app using `@mysten/dapp-kit`:
+Meddleware apps use [`@meddleware/wallet-adapter`](https://www.npmjs.com/package/@meddleware/wallet-adapter),
+a wallet-standard composable whose connection is shared by every view in the window:
 
 ```ts
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useWallet } from '@meddleware/wallet-adapter'
 
-const account = useCurrentAccount()
-const { mutate: signAndExecute } = useSignAndExecuteTransaction()
+const { account, buildExecutor } = useWallet({ requiredFeatures: ['sui:signTransaction'] })
 
-function executeMyPTB() {
-  const tx = new Transaction()
-  // ... build tx ...
-  signAndExecute(
-    { transaction: tx },
-    {
-      onSuccess: (result) => { console.log('digest:', result.digest) },
-      onError:   (err)    => { console.error(err) },
-    },
-  )
+async function run(tx: Transaction): Promise<string> {
+  const exec = await buildExecutor('testnet', 'https://fullnode.testnet.sui.io:443')
+  const { digest } = await exec.signAndExecute(tx)
+  await exec.waitForTransaction(digest)
+  return digest
 }
 ```
 
 ## Error handling
 
-Move aborts are surfaced as numeric codes in `effects.status.error`. Map them to human-readable messages for your users:
+A transaction that executed but aborted comes back as `FailedTransaction` — it does not throw. Move
+aborts carry the module and the code; abort codes are only unique **within** a module
+(`access_gate`, `nft_gate` and `timelock` all use small integers), so always key on
+`(module, code)`:
 
 ```ts
-const VAULT_ERRORS: Record<number, string> = {
-  1: 'Insufficient balance',
-  5: 'Below minimum deposit',
-  85: 'Stale strategy NAV — refresh all active strategy NAVs in the same PTB',
+const ABORTS: Record<string, Record<number, string>> = {
+  access_gate: {
+    1: 'This gate is paused.',
+    2: 'Payment is below the gate price.',
+    4: 'This pass has no uses left.',
+    5: 'This pass or cap belongs to a different gate.',
+    6: 'This gate is frozen.',
+    10: 'This gate cannot be frozen while paused.',
+  },
+  nft_gate: { 2: 'Pass is for a different gate.', 3: 'Pass is used up.', 4: 'Gate is paused.' },
 }
 
-function describeAbort(error: string): string {
-  const match = error.match(/MoveAbort\(.*?,\s*(\d+)\)/)
-  const code = match ? parseInt(match[1]) : -1
-  return VAULT_ERRORS[code] ?? `Unknown error (code ${code})`
+function describeFailure(outcome: { status: { success: boolean; error?: any } }): string | null {
+  if (outcome.status.success) return null
+  const err = outcome.status.error
+  if (err?.$kind === 'MoveAbort') {
+    const module = err.MoveAbort.location?.module ?? ''
+    const code = Number(err.MoveAbort.abortCode)
+    return ABORTS[module]?.[code] ?? `${module} aborted with code ${code}`
+  }
+  return err?.message ?? 'Transaction failed'
 }
 ```
+
+Full abort-code tables live in each package's API reference:
+[`access_gate`](/sui/onchain/access-gate/api-reference) ·
+[`seal_policies`](/sui/onchain/sealed-storage/api-reference).

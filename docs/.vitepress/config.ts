@@ -110,14 +110,8 @@ export default defineConfig({
             // TODO white-label: { text: 'White-label operator guide', link: '/sui/access-gate/operator' }
           ],
         },
-        {
-          text: 'DAO',
-          collapsed: true,
-          items: [
-            { text: 'Governance patterns', link: '/sui/dao/' },
-            // TODO white-label: { text: 'White-label operator guide', link: '/sui/dao/operator' }
-          ],
-        },
+        // TODO: DAO — governance patterns parked in drafts/dao-governance.md until governance
+        // returns: { text: 'DAO', collapsed: true, items: [{ text: 'Governance patterns', link: '/sui/dao/' }] }
         // Canonical on-chain docs (generated from the Move packages — scripts/gen-onchain.mjs).
         ...onchainSidebar,
       ],

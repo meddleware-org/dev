@@ -25,16 +25,13 @@ curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | 
 suiup install sui@testnet
 suiup install walrus@testnet
 
-# Pin to the exact versions used in this workspace
-suiup install sui@testnet-v1.76.1
-suiup switch sui@testnet-v1.76.1
-
-suiup install walrus@testnet-v1.53.0
-suiup switch walrus@testnet-v1.53.0
+# Pin the Sui version the Move packages are tested with in CI
+suiup install sui@testnet-v1.80.0
+suiup switch sui@testnet-v1.80.0
 
 # Verify
-sui --version     # sui testnet-v1.76.1
-walrus --version  # walrus testnet-v1.53.0
+sui --version     # sui 1.80.0-…
+walrus --version
 ```
 
 ### Checking for updates
@@ -66,18 +63,15 @@ sui client new-address ed25519
 
 Fund the address from the [Sui testnet faucet](https://faucet.sui.io/).
 
-## npm workspaces
+## Repositories
 
-The monorepo uses npm workspaces. Install all dependencies from the workspace root:
-
-```bash
-cd workspace/
-npm install
-```
-
-Individual packages can be built or tested independently:
+Each package is a standalone repository with its own lockfile — there is no monorepo install.
+Clone what you need and work in it directly:
 
 ```bash
-cd repos/walrus-ui && npm run build
-cd repos/seal-ui   && npm run type-check
+git clone https://github.com/meddleware-org/seal-client.git
+cd seal-client && npm install && npm test && npm run type-check
 ```
+
+Apps depend on the SDKs through npm; to develop an app against an unpublished SDK change, use
+`npm link` (or an `overrides` entry pointing at a local path) in the app.

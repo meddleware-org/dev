@@ -33,10 +33,10 @@ features:
     details: Create NFT access-gate passes, verify them in your app, and deploy the nft-gate gateway.
     link: /sui/access-gate/
     linkText: Access Gate
-  - title: DAO
-    details: Interact with the Meddleware DAO from code — governance PTBs, on-chain objects, and treasury reads.
-    link: /sui/dao/
-    linkText: DAO
+  - title: Contract layout
+    details: The Move packages (access_gate, seal_policies, sui_token_template), their testnet IDs, and the on-chain reference for each.
+    link: /sui/#contract-layout
+    linkText: Contract layout
   - title: API reference
     details: Full TypeDoc SDK reference lives in the user docs — every exported function, type, and class.
     link: https://docs.meddleware.co.uk/blockchain/sui/

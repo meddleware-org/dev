@@ -52,34 +52,53 @@ sui client switch --env localnet
 sui client faucet
 ```
 
-### Publishing contracts to localnet
+### Publishing packages to localnet
+
+Clone the package you need (for example `access_gate`) and publish it with `test-publish`. Sui CLI ≥
+1.80 only runs `sui client publish` against environments declared in the package's `Move.toml`;
+`test-publish` publishes to any environment and resolves dependencies to ephemeral addresses:
 
 ```bash
-cd blockchain/sui/contracts/core
-sui move build --build-env localnet
-sui client publish --gas-budget 200000000
+git clone https://github.com/meddleware-org/access-gate-sui.git
+cd access-gate-sui
+sui move test --build-env testnet          # hermetic unit tests
+sui client test-publish --build-env localnet --gas-budget 200000000
 ```
 
-Keep the published package address — you'll need it to call entry functions in tests.
+Keep the published package ID and the created object IDs (for `access_gate`: `PlatformConfig`) —
+you pass them to the SDK. `test-publish` records the localnet pin in `Move.lock`; discard that change
+(`git checkout -- Move.lock`) rather than committing it. The packages' own `scripts/publish.sh`
+wrap this with safety checks and write the IDs to an env file.
 
 ## TypeScript SDK — network configuration
 
-The `@mysten/sui` SDK reads the network from your build config or at runtime:
+`@mysten/sui` v2 talks to fullnodes over gRPC (gRPC-web in the browser) with `SuiGrpcClient`:
 
 ```ts
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { SuiGrpcClient } from '@mysten/sui/grpc'
 
-const network = (import.meta.env.VITE_NETWORK ?? 'testnet') as 'localnet' | 'testnet' | 'mainnet'
+type Network = 'localnet' | 'testnet' | 'mainnet'
+const network = (import.meta.env.VITE_NETWORK ?? 'testnet') as Network
 
-const client = new SuiClient({
-  url: network === 'localnet'
-    ? 'http://127.0.0.1:9000'
-    : getFullnodeUrl(network),
-})
+const BASE_URLS: Record<Network, string> = {
+  localnet: 'http://127.0.0.1:9000',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+}
+
+const client = new SuiGrpcClient({ network, baseUrl: BASE_URLS[network] })
+
+// Reads go through the shared Core API — the same on the gRPC and GraphQL clients.
+const { object } = await client.core.getObject({ objectId, include: { json: true } })
 ```
 
-::: warning Public fullnodes
-Public testnet fullnodes use **gRPC/GraphQL** (JSON-RPC was retired in September 2026). The `SuiClient` from `@mysten/sui ^2.x` uses GraphQL transport by default — ensure you are on a current SDK version.
+Every Meddleware SDK accepts a client with this Core API (`ClientWithCoreApi`); in a Vue app,
+`@meddleware/wallet-adapter`'s `getSuiClient(network, url)` returns a shared instance.
+
+::: warning JSON-RPC is gone
+Public fullnodes stopped serving JSON-RPC in September 2026. `SuiClient` / `getFullnodeUrl` from
+`@mysten/sui/client` no longer exist in v2. gRPC renders Move struct fields flat under `json`, and
+may render framework addresses in long form (`0x000…0002::coin::Coin`) — compare types tolerantly.
 :::
 
 ## Useful CLI commands
@@ -96,6 +115,9 @@ sui client call \
   --args <ARG1> <ARG2> \
   --gas-budget 10000000
 
-# Read Move events
-sui client events --package <PACKAGE_ID>
+# Build and run an ad-hoc PTB from the shell
+sui client ptb --move-call <PACKAGE_ID>::<MODULE>::<FUNCTION> <ARG1> <ARG2>
 ```
+
+Events are not queryable from the CLI; read them from a transaction
+(`client.getTransaction({ digest, include: { events: true } })`) or the GraphQL API.

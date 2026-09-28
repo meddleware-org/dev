@@ -2,14 +2,14 @@
 
 ## Running a specific app
 
-Each app in `repos/` has a local dev server:
+Each app has a local dev server:
 
 ```bash
-cd repos/walrus-ui && npm run dev    # http://localhost:5173
-cd repos/seal-ui   && npm run dev
-cd repos/access-gate-ui && npm run dev
-cd repos/dao-ui    && npm run dev
+git clone https://github.com/meddleware-org/walrus-ui.git
+cd walrus-ui && npm install && npm run dev    # http://localhost:5173
 ```
+
+The same applies to `seal-ui`, `access-gate-ui` and `token-deployer-ui`.
 
 All apps read environment variables from `.env.local` (git-ignored). Copy the example file to get started:
 
@@ -21,7 +21,8 @@ cp .env.example .env.local
 ## Running this docs site locally
 
 ```bash
-cd repos/dev
+git clone https://github.com/meddleware-org/dev.git
+cd dev
 npm install
 npm run dev   # http://localhost:5173
 ```
@@ -29,10 +30,15 @@ npm run dev   # http://localhost:5173
 For the user-facing docs site:
 
 ```bash
-cd repos/docs
+git clone https://github.com/meddleware-org/docs.git
+cd docs
 npm install
 npm run dev   # gen:api runs first (requires @meddleware/* SDK packages published)
 ```
+
+Both sites import the on-chain docs of the Move packages at build time (`gen:onchain`). To preview
+local checkouts instead of the installed npm packages, clone the Move repos next to the site and
+run `ONCHAIN_DOCS_ROOT=.. npm run dev`.
 
 ## Environment variables
 
@@ -40,35 +46,36 @@ Common variables shared across apps:
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `VITE_NETWORK` | `testnet` | `localnet` \| `testnet` \| `mainnet` |
+| `VITE_NETWORK` | `testnet` | `testnet` \| `mainnet` (the token deployer also accepts `localnet`) |
 | `VITE_DOCS_URL` | `https://docs.meddleware.co.uk` | User docs base URL |
 | `VITE_DEV_URL` | `https://dev.meddleware.co.uk` | Developer docs base URL |
-| `VITE_API_BASE` | `` (same-origin) | Override API host (status-page, etc.) |
+| `VITE_RPC_TESTNET` / `VITE_RPC_MAINNET` | public Mysten fullnodes | gRPC-web endpoint overrides |
 
-Per-service variables (e.g. `VITE_WALRUS_PUBLISHER_URL`, `VITE_NFT_GATE_URL`) are documented in each app's `.env.example`.
+Everything else (relay hosts, Seal committee, gate-creation policy, …) is app-specific and
+documented in each app's `.env.example`. All `VITE_*` values are baked in at build time and are
+never secret.
 
 ## Docker builds
 
 To build and run any service as a Docker image (requires Docker Desktop or similar):
 
 ```bash
-cd repos/walrus-ui
+cd walrus-ui
 docker build -t walrus-ui:dev .
 docker run -p 8080:8080 walrus-ui:dev
 ```
 
 The `SPA_FALLBACK=true` env var is baked in — the static-server handles client-side routing.
 
-## Move contracts (localnet)
+## Move packages (localnet)
 
-For local contract development, start a localnet and publish the contracts:
+For local contract development, start a localnet and publish a package with `test-publish`:
 
 ```bash
-sui start --with-faucet   # starts localnet on :9000; press Ctrl+C to stop
+sui start --with-faucet --force-regenesis   # localnet on :9000, faucet on :9123; Ctrl+C to stop
 # In another terminal:
-cd blockchain/sui/contracts/core
-sui move build --build-env localnet
-sui client publish --gas-budget 200000000
+git clone https://github.com/meddleware-org/access-gate-sui.git && cd access-gate-sui
+sui client test-publish --build-env localnet --gas-budget 200000000
 ```
 
 See [Environment setup](../sui/environment) for a full localnet workflow.

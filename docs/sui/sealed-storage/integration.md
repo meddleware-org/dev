@@ -1,125 +1,97 @@
 # Sealed Storage — Integration guide
 
-## Full encrypt → store → decrypt flow
+Examples use the `seal` controller from the [SDK setup](./), a Walrus client `walrus` from
+[`createWalrusClient`](/sui/walrus-storage/), and an executor `exec` that signs and executes
+transactions (in Vue: `@meddleware/wallet-adapter`).
 
-### Encrypt and store
-
-```ts
-import { SealClient } from '@meddleware/seal-client'
-import { WalrusRelayClient } from '@meddleware/walrus-client'
-
-async function encryptAndStore(
-  sealClient: SealClient,
-  walrus: WalrusRelayClient,
-  file: File,
-  policyId: string,  // on-chain Move policy object ID
-  epochs = 5,
-): Promise<SealManifest> {
-  // 1. Encrypt locally — key is derived from policyId
-  const { ciphertext, encryptedKey } = await sealClient.encrypt(file, { policyId })
-
-  // 2. Upload ciphertext to Walrus
-  const result = await walrus.store(
-    new File([ciphertext], file.name, { type: 'application/octet-stream' }),
-    { epochs },
-  )
-
-  // 3. Return the manifest (store this somewhere accessible)
-  return {
-    version: 1,
-    policyId,
-    blobId: result.blobId,
-    encryptedKey,
-    contentType: file.type,
-  }
-}
-```
-
-### Decrypt
+## Encrypt to an access gate and store on Walrus
 
 ```ts
-async function decryptManifest(
-  sealClient: SealClient,
-  walrus: WalrusRelayClient,
-  manifest: SealManifest,
-  signer: { address: string; sign: (msg: Uint8Array) => Promise<Uint8Array> },
-): Promise<Blob> {
-  // 1. Request the decryption key from Seal
-  //    Seal verifies on-chain that signer.address satisfies the policy
-  const key = await sealClient.requestKey({
-    policyId: manifest.policyId,
-    encryptedKey: manifest.encryptedKey,
-    signer,
-  })
+import { createBlobUploadFlow } from '@meddleware/walrus-client'
+import type { SealedManifest } from '@meddleware/seal-client'
 
-  // 2. Download the ciphertext from Walrus
-  const ciphertext = await walrus.read(manifest.blobId)
+// 1. Encrypt locally: anyone holding a valid pass for `gateId` will be able to decrypt
+const { id, ciphertext } = await seal.encrypt('nft-gate', { gateId }, plaintextBytes)
 
-  // 3. Decrypt locally
-  const plaintext = await sealClient.decrypt(ciphertext, key)
-  return new Blob([plaintext], { type: manifest.contentType })
-}
+// 2. Store the ciphertext (register → upload → certify; see Walrus Storage)
+const flow = createBlobUploadFlow(walrus, ciphertext)
+await flow.encode()
+const reg = await exec.signAndExecute(flow.register({ epochs: 53, owner: address, deletable: false }))
+await exec.waitForTransaction(reg.digest)
+await flow.upload({ digest: reg.digest })
+const cert = await exec.signAndExecute(flow.certify())
+await exec.waitForTransaction(cert.digest)
+const { blobId } = await flow.getBlob()
+
+// 3. Keep the manifest — it is all a reader needs
+const manifest: SealedManifest = { policyType: 'nft-gate', id, blobId, network: 'testnet', params: { gateId } }
 ```
 
-## Using with dapp-kit
+A time lock instead: `seal.encrypt('time-lock', { unlockMs: Date.parse('2027-01-01') }, bytes)`.
 
-Wire the wallet signer from `@mysten/dapp-kit`:
+## Decrypt
 
 ```ts
-import { useCurrentAccount, useSignPersonalMessage } from '@mysten/dapp-kit'
+import { parseSealedManifest, SealedManifestError } from '@meddleware/seal-client'
+import { walrusBlobUrl } from '@meddleware/walrus-client'
 
-const account = useCurrentAccount()
-const { mutateAsync: signPersonalMessage } = useSignPersonalMessage()
+const m = parseSealedManifest(untrustedJson)
+if (m.network !== 'testnet') throw new Error('Manifest is for another network')
 
-const signer = {
-  address: account.value!.address,
-  sign: async (msg: Uint8Array) => {
-    const { signature } = await signPersonalMessage({ message: msg })
-    return signature
-  },
-}
+const ciphertext = new Uint8Array(await (await fetch(walrusBlobUrl('testnet', m.blobId))).arrayBuffer())
+
+// nft-gate needs the reader's pass: its object id, and whether the gate is soulbound
+const plaintext = await seal.decrypt(
+  m.policyType,
+  { ...m.params, nftId: passId, soulbound },
+  m.id,
+  ciphertext,
+  { address, signPersonalMessage: (message) => wallet.signPersonalMessage({ message }) },
+)
 ```
 
-## Error handling
+The first decrypt for an address asks the wallet for one personal-message signature (the Seal
+session key); later decrypts reuse it until it expires. Find the reader's pass with
+`fetchAccessNfts(client, address, nftType, gateId)` from `@meddleware/nft-gate-client`.
+
+## Publish a discovery pointer (optional)
+
+`sealed_content::publish` records an on-chain pointer (gate, blob, identity, label) so unlock UIs can
+list what a gate protects. It is **not** a policy and grants nothing:
 
 ```ts
-try {
-  const key = await sealClient.requestKey({ policyId, encryptedKey, signer })
-} catch (err) {
-  if (err instanceof SealPolicyError) {
-    // Wallet does not satisfy the policy
-    console.error('Access denied:', err.policyId, err.reason)
-  } else if (err instanceof SealKeyServerError) {
-    // Key server unavailable or quorum not reached
-    console.error('Key server error:', err.message)
-  }
-  throw err
-}
+import { Transaction } from '@mysten/sui/transactions'
+import { buildPublishSealedContentTx, sealedContentEventType } from '@meddleware/seal-client'
+
+const tx = new Transaction()
+buildPublishSealedContentTx(tx, SEAL_POLICIES_PACKAGE, { gateId, blobId, sealId: id, label: 'Chapter 1' })
+await exec.signAndExecute(tx)
 ```
 
-## Vue composable
+Anyone can publish a pointer under any gate with any label. When listing pointers (events of type
+`sealedContentEventType(pkg)`), show only those whose `publisher` is the gate's operator or a list you
+curate.
 
-```ts
-// composables/useSealDecrypt.ts
-import { ref } from 'vue'
+## What access means
 
-export function useSealDecrypt(sealClient: SealClient, walrus: WalrusRelayClient) {
-  const decrypting = ref(false)
-  const result     = ref<Blob | null>(null)
-  const error      = ref<Error | null>(null)
+- **Membership, not consumption.** Decrypting never spends a single-use pass; an exhausted
+  (zero-use) pass cannot decrypt.
+- **No revocation.** A released key stays usable, and a decrypted file stays decrypted. Transferring
+  a pass moves future access with it.
+- **Pause.** If the gate was created with the policy `pause_blocks_decryption`, a paused gate denies
+  new decryptions (`nft_gate` abort 4) until it is unpaused — tell the user it is paused rather than
+  that their pass is invalid. Otherwise pausing only stops sales.
 
-  async function decrypt(manifest: SealManifest, signer: SealSigner) {
-    decrypting.value = true
-    error.value      = null
-    try {
-      result.value = await decryptManifest(sealClient, walrus, manifest, signer)
-    } catch (e) {
-      error.value = e as Error
-    } finally {
-      decrypting.value = false
-    }
-  }
+## Errors
 
-  return { decrypting, result, error, decrypt }
-}
-```
+| Where | Meaning | Handling |
+| --- | --- | --- |
+| `nft_gate` abort 1 | identity not namespaced to this gate | wrong manifest/gate pairing |
+| `nft_gate` abort 2 | pass is for another gate | pick the pass for `params.gateId` |
+| `nft_gate` abort 3 | pass has no uses left | buy another pass |
+| `nft_gate` abort 4 | gate paused and its policy blocks decryption | retry after the operator unpauses |
+| `timelock` abort 2 | before the unlock time | show the unlock date |
+| `SealedManifestError` | malformed manifest | reject the input |
+| key-server / network errors | committee unavailable or below threshold | retry; decryption fails closed |
+
+Codes repeat across modules — always key on `(module, code)` ([PTB patterns](/sui/ptb-patterns#error-handling)).

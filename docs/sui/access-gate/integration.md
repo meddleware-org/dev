@@ -1,168 +1,115 @@
 # Access Gate — Integration guide
 
-## Full purchase → verify flow
+Examples use `gate` (an `AccessGateConfig`), a Core-API Sui `client`, and an executor `exec` that
+signs and executes transactions — see the [SDK setup](./).
 
-### Purchase a pass
-
-```ts
-import { Transaction } from '@mysten/sui/transactions'
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
-
-const PACKAGE    = import.meta.env.VITE_ACCESS_GATE_PACKAGE
-const GATE_ID    = import.meta.env.VITE_GATE_ID
-const PLATFORM   = import.meta.env.VITE_PLATFORM_CONFIG_ID
-
-async function buyPass(
-  suiClient: SuiClient,
-  signer: { address: string; signAndExecute: (tx: Transaction) => Promise<string> },
-  priceInMist: bigint,
-): Promise<string> {
-  const tx = new Transaction()
-  const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)])
-  // purchase(gate, platform, payment) mints the pass to the sender and refunds overpayment.
-  tx.moveCall({
-    target: `${PACKAGE}::access_gate::purchase`,
-    arguments: [tx.object(GATE_ID), tx.object(PLATFORM), coin],
-  })
-
-  const digest = await signer.signAndExecute(tx)
-  return digest
-}
-```
-
-### Verify a pass off-chain (challenge/proof)
-
-The gateway issues a one-time nonce; the client must sign it with the pass object to prove ownership.
+## Buying a pass
 
 ```ts
-import { NftGateClient } from '@meddleware/nft-gate-client'
+import { buildPurchaseTx, fetchAccessNfts } from '@meddleware/nft-gate-client'
 
-async function getAccessToken(
-  gateClient: NftGateClient,
-  signer: { address: string; sign: (msg: Uint8Array) => Promise<Uint8Array> },
-  gateId: string,
-  passId: string,
-): Promise<string> {
-  // 1. Request a challenge from the gateway
-  const { challenge, nonce } = await gateClient.requestChallenge({ gateId, passId })
+const { digest } = await exec.signAndExecute(buildPurchaseTx(gate, priceMist))
+await exec.waitForTransaction(digest)
 
-  // 2. Sign the challenge with the user's wallet
-  const signature = await signer.sign(new TextEncoder().encode(challenge))
-
-  // 3. Submit the proof; receive a short-lived JWT
-  const { token } = await gateClient.submitProof({
-    gateId,
-    passId,
-    nonce,
-    signature,
-    address: signer.address,
-  })
-
-  return token
-}
+const passes = await fetchAccessNfts(client, address, gate.nftType, gate.gateId)
+// [{ objectId, gateId, usesRemaining }] — usesRemaining is null for an unlimited pass
 ```
 
-The `token` is a signed JWT issued by the gateway. Present it in the `Authorization: Bearer <token>` header when calling any gated API endpoint.
+Read the current price from the gate (`fetchGate(client, gateId)` → `priceMist`) rather than
+hard-coding it. A paused gate refuses purchases (`access_gate` abort 1).
 
-### Nonce requirements
+## Proving access to a gateway
 
-The `access_gate` Move package requires a minimum nonce length of 8 bytes. The gateway enforces this automatically. If you are calling the contract directly (not via the gateway), generate at least 8 bytes of entropy:
+The wallet signs the gateway's challenge; the gateway checks the signature, that the nonce is fresh
+and unused, and that the address owns a pass for the gate.
 
 ```ts
-const nonce = crypto.getRandomValues(new Uint8Array(8))
+import { fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
+
+const challenge = await fetchChallenge(GATEWAY)            // GET /v1/challenge → { nonce, expiresAt }
+const token = await buildAccessProof({
+  address,
+  challenge,
+  sign: (message) => wallet.signPersonalMessage({ message }), // → { signature }
+})
+
+await fetch(`${GATEWAY}/protected/path`, { headers: { Authorization: `Bearer ${token}` } })
 ```
 
-### Check pass validity before gating
+The token is `base64(JSON { address, nonce, signature, consumeDigest? })` and valid for one request
+with that nonce (the challenge TTL defaults to 300 s).
+
+### Single-use gateways
+
+A gateway in single-use mode also requires an on-chain `consume` bound to the challenge nonce, and
+redeems each consume once:
 
 ```ts
-const hasAccess = await gateClient.hasValidPass(gateId, walletAddress)
-if (!hasAccess) {
-  // Prompt user to purchase
-}
+import { buildConsumeTx } from '@meddleware/nft-gate-client'
+
+const challenge = await fetchChallenge(GATEWAY)
+const consume = await exec.signAndExecute(buildConsumeTx(gate, passId, challenge.nonce))
+await exec.waitForTransaction(consume.digest)
+const token = await buildAccessProof({ address, challenge, sign, consumeDigest: consume.digest })
 ```
 
-## Using with dapp-kit
+`consume` takes the pass by value, so only its holder can spend it; the emitted
+`AccessConsumedEvent` records the nonce and the consumer, which is what the gateway matches.
+Exhausted passes are deleted if the gate auto-burns, otherwise kept as receipts.
 
-Wire the wallet from `@mysten/dapp-kit`:
+## Operating gates
+
+Operators create and manage gates with the same library (the `access-gate-ui` console is built on
+it):
 
 ```ts
-import { useCurrentAccount, useSignPersonalMessage, useSignAndExecuteTransaction } from '@mysten/dapp-kit'
-import { Transaction } from '@mysten/sui/transactions'
+import {
+  buildCreateGateTx, fetchOwnedGates, buildSetPriceTx, buildSetPausedTx, buildAirdropTx,
+  buildMakeGateImmutableTx, fetchPlatformCommission, minimumProfitablePriceMist,
+} from '@meddleware/nft-gate-client'
 
-const account = useCurrentAccount()
-const { mutateAsync: signPersonalMessage } = useSignPersonalMessage()
-const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction()
+// Price floor: the smallest price that earns ≥ 1 MIST of commission (500 MIST at 20 bps)
+const { commissionBps } = (await fetchPlatformCommission(client, gate.platformConfigId))!
+const floor = minimumProfitablePriceMist(commissionBps)
 
-const signer = {
-  address: account.value!.address,
-  sign: async (msg: Uint8Array) => {
-    const { signature } = await signPersonalMessage({ message: msg })
-    return signature
-  },
-  signAndExecute: async (tx: Transaction) => {
-    const { digest } = await signAndExecuteTransaction({ transaction: tx })
-    return digest
-  },
-}
+await exec.signAndExecute(
+  buildCreateGateTx(PKG, {
+    priceMist: 1_000_000n, paymentRecipient: address, defaultUses: 0n, soulbound: true,
+    autoBurnAtZero: false, nftName: 'Member pass', nftImageUrl: 'https://…', nftDescription: '…',
+    // policy: { freezeRequiresUnpaused: true, lockCommissionOnFreeze: false, pauseBlocksDecryption: true },
+  }),
+)
+
+const gates = await fetchOwnedGates(client, address, PKG) // every gate this address administers
+const ctx = { packageId: PKG, gateId: gates[0].gateId, adminCapId: gates[0].adminCapId }
+await exec.signAndExecute(buildSetPausedTx(ctx, true))
+await exec.signAndExecute(buildAirdropTx(ctx, friendAddress))
 ```
+
+- **Policy** (optional, immutable): restrictions recorded on the gate at creation — no freezing
+  while paused, commission locked at freeze, pause blocks Seal decryption. Omitting it creates an
+  unrestricted gate; setting any flag needs a policy-aware `access_gate` version.
+- **Freeze** (`buildMakeGateImmutableTx(ctx, platformConfigId)`) is irreversible: it destroys the
+  `AdminCap`, ending all settings and airdrops; sales and uses continue.
 
 ## Error handling
 
-```ts
-import { NftGateError, GateNotFoundError, PassExpiredError } from '@meddleware/nft-gate-client'
+Transactions that abort come back as `FailedTransaction`; read the module and code from
+`status.error.MoveAbort` ([PTB patterns](/sui/ptb-patterns#error-handling)). The `access_gate`
+codes:
 
-try {
-  const token = await getAccessToken(gateClient, signer, gateId, passId)
-} catch (err) {
-  if (err instanceof GateNotFoundError) {
-    console.error('Gate does not exist:', gateId)
-  } else if (err instanceof PassExpiredError) {
-    console.error('Pass is expired or consumed')
-  } else if (err instanceof NftGateError) {
-    console.error('Gateway error:', err.code, err.message)
-  }
-  throw err
-}
-```
+| Code | Meaning |
+| --- | --- |
+| 1 | gate paused (purchase) |
+| 2 | payment below price |
+| 3 | `consume` on an unlimited pass |
+| 4 | pass has no uses left |
+| 5 | pass or cap belongs to another gate |
+| 6 | gate frozen (settings, airdrop) |
+| 7 | commission above 10% (platform) |
+| 8 | nonce shorter than 8 bytes |
+| 9 | platform treasury set to `@0x0` (policy-aware versions) |
+| 10 | freeze refused: gate paused and its policy requires unpaused (policy-aware versions) |
 
-## Vue composable
-
-```ts
-// composables/useAccessGate.ts
-import { ref } from 'vue'
-import { NftGateClient } from '@meddleware/nft-gate-client'
-
-export function useAccessGate(gateClient: NftGateClient) {
-  const checking  = ref(false)
-  const hasAccess = ref<boolean | null>(null)
-  const token     = ref<string | null>(null)
-  const error     = ref<Error | null>(null)
-
-  async function check(gateId: string, address: string) {
-    checking.value  = true
-    error.value     = null
-    try {
-      hasAccess.value = await gateClient.hasValidPass(gateId, address)
-    } catch (e) {
-      error.value = e as Error
-    } finally {
-      checking.value = false
-    }
-  }
-
-  async function authenticate(
-    gateId: string,
-    passId: string,
-    signer: { address: string; sign: (msg: Uint8Array) => Promise<Uint8Array> },
-  ) {
-    error.value = null
-    try {
-      token.value = await getAccessToken(gateClient, signer, gateId, passId)
-    } catch (e) {
-      error.value = e as Error
-    }
-  }
-
-  return { checking, hasAccess, token, error, check, authenticate }
-}
-```
+Gateway HTTP errors (`401`, `403`, `409`, `429`, `502`) are described in
+[Deploy the gateway](./gateway#responses).

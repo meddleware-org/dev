@@ -2,7 +2,14 @@
 
 [User docs →](https://docs.meddleware.co.uk/blockchain/sui/access-gate/) | [API reference →](https://docs.meddleware.co.uk/blockchain/sui/access-gate/reference)
 
-The Access Gate lets operators create on-chain NFT pass systems. Each gate can mint unlimited-use or single-use passes, optionally soulbound to the buyer's address. Operators and the platform earn commission on each sale.
+An **access gate** is an on-chain pass system: anyone can create a gate (price, payout address,
+pass flavour), anyone can buy a pass, and a service — a relay, a website, a Seal policy — admits
+holders. Each purchase pays the platform commission (`PlatformConfig`, ≤ 10%) and the rest to the
+gate's recipient, in one transaction.
+
+[`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) builds
+the transactions and reads, and produces the access proofs that an
+[nft-gate gateway](./gateway) verifies.
 
 ## Install
 
@@ -10,59 +17,56 @@ The Access Gate lets operators create on-chain NFT pass systems. Each gate can m
 npm install @meddleware/nft-gate-client @mysten/sui
 ```
 
-## Initialise the client
-
-```ts
-import { NftGateClient } from '@meddleware/nft-gate-client'
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
-
-const suiClient   = new SuiClient({ url: getFullnodeUrl('testnet') })
-const gateClient  = new NftGateClient({
-  suiClient,
-  network: 'testnet',
-  gatewayUrl: import.meta.env.VITE_NFT_GATE_URL ?? 'https://nft-gate.meddleware.co.uk',
-})
-```
-
 ## Key concepts
 
-| Term | Description |
+| Term | Meaning |
 | --- | --- |
-| `Gate` | On-chain object representing an access system (price, supply, commission config) |
-| `AdminCap` | Capability object held by the gate operator; required for privileged operations |
-| `AccessPass` | NFT minted when a user buys access |
-| Soulbound | A pass bound to one address — non-transferable |
-| Challenge/proof | Off-chain protocol: gateway issues a nonce; client signs it with the pass |
+| `Gate` | Shared object: price, payment recipient, pass flavour, pause/freeze state, immutable policy |
+| `AdminCap` | Owned capability for one gate: settings, airdrops, freeze |
+| `AccessNFT` / `SoulboundAccessNFT` | The pass. Soulbound passes have no `store` ability, so they cannot be transferred |
+| Unlimited vs single-use | `default_uses = 0` → valid while held; `N` → `N` uses, each spent on-chain by the holder with `consume` |
+| `PlatformConfig` | Shared object with the platform treasury and commission rate |
+| Challenge / proof | A gateway issues a nonce; the wallet signs `nft-gate:access:<nonce>`; the proof token is sent as `Authorization: Bearer …` |
+
+## Configure a gate
+
+Most calls take an `AccessGateConfig`:
+
+```ts
+import type { AccessGateConfig } from '@meddleware/nft-gate-client'
+
+const PKG = '0x0bedd0b27d993d3292ca6a5315f7562de8bc0ff3752b445b4c53252c76f2d20d' // access_gate (testnet)
+
+const gate: AccessGateConfig = {
+  packageId: PKG,
+  gateId: GATE_ID,
+  platformConfigId: '0x7c5aed0ce7f29a4dfb60657858df31c12410a67098b4bcdd1d8cb1e531be4884',
+  nftType: `${PKG}::access_gate::SoulboundAccessNFT`, // or ::AccessNFT
+  soulbound: true,
+}
+```
 
 ## Quick start
 
-Check whether an address holds a valid pass for a gate:
-
 ```ts
-const hasAccess = await gateClient.hasValidPass(gateId, walletAddress)
+import { SuiGrpcClient } from '@mysten/sui/grpc'
+import { ownsAccessNft, buildPurchaseTx } from '@meddleware/nft-gate-client'
+
+const client = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
+
+// Does this wallet hold a pass for the gate?
+const hasAccess = await ownsAccessNft(client, address, gate.nftType, gate.gateId)
+
+// If not, buy one (the wallet signs; overpayment is refunded on-chain)
+if (!hasAccess) await exec.signAndExecute(buildPurchaseTx(gate, priceMist))
 ```
 
-Buy a pass:
-
-```ts
-import { Transaction } from '@mysten/sui/transactions'
-
-const tx = new Transaction()
-const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)])
-// purchase(gate, platform, payment): mints the pass to the sender and refunds any overpayment —
-// it returns nothing, so there is no pass to transfer.
-tx.moveCall({
-  target: `${ACCESS_GATE_PACKAGE}::access_gate::purchase`,
-  arguments: [tx.object(gateId), tx.object(PLATFORM_CONFIG_ID), coin],
-})
-await signAndExecute({ transaction: tx })
-```
-
-The contract itself (objects, events, abort codes, replay rules for single-use passes) is documented
-with the Move package: [on-chain overview](/sui/onchain/access-gate/overview),
+The contract itself — objects, events, abort codes and the replay rules for single-use passes — is
+documented with the Move package: [on-chain overview](/sui/onchain/access-gate/overview),
 [developer integration](/sui/onchain/access-gate/dev-guide) and
 [API reference](/sui/onchain/access-gate/api-reference).
 
-See [Integration guide](./integration) for the full purchase → verify flow and [Deploy the gateway](./gateway) for self-hosting the challenge/proof gateway.
+See the [integration guide](./integration) for proving access to a gateway and operating gates, and
+[Deploy the gateway](./gateway) to protect your own service.
 
 <!-- white-label: operator guide (custom gate config, commission setup, branded pass metadata) — planned -->

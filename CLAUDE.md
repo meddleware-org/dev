@@ -46,6 +46,19 @@ White-label content is not published. Positions are annotated only:
 
 Do not remove these annotations. Do not add rendered white-label content.
 
+## Drafts (unpublished TODO material)
+
+`drafts/` (repo root, outside the VitePress `srcDir`) holds material for future pages that is not
+yet true of anything published — currently the retired DAO page and mwSUI vault notes. Each file
+opens with a status comment listing what must be verified before it moves into `docs/`. Never link
+to drafts from `docs/`.
+
+## Accuracy rule
+
+Every snippet must match the published SDKs (`@mysten/sui` v2 + gRPC: `SuiGrpcClient`, Core API —
+no `SuiClient`/`getFullnodeUrl`, no JSON-RPC) and the real `@meddleware/*` exports. Move facts come
+from the imported on-chain docs; link to them instead of restating tables.
+
 ## Content boundary (docs vs dev)
 
 | Content type | Site |

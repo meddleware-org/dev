@@ -1,159 +1,109 @@
-# Deploy the NFT Gate gateway
+# Deploy the NFT gate gateway
 
-The NFT Gate gateway handles the off-chain challenge/proof protocol. It issues nonces, verifies NFT ownership on-chain, and returns short-lived JWTs. Two implementations are available: a Rust/Axum service and a Cloudflare Workers implementation.
+[`nft-gate`](https://github.com/meddleware-org/nft-gate) is a generic **NFT-gated reverse proxy**:
+put it in front of any HTTP service (an upload relay, a website, an API) and only holders of an
+`access_gate` pass get through. It issues challenge nonces, verifies wallet-signed access proofs and
+pass ownership on-chain, rate-limits per address, and proxies authorised requests to the upstream.
+It issues no sessions or tokens of its own — every request carries a fresh proof.
 
 ## Implementations
 
-| Implementation | Location | Best for |
+Two wire-identical implementations share the same routes, status codes, proof format and variable
+names, and are tested against the same [conformance vectors](https://github.com/meddleware-org/nft-gate/tree/main/conformance):
+
+| Implementation | Source | Distributed as | State (nonces, rate limits) |
+| --- | --- | --- | --- |
+| Cloudflare Workers | `gateway-workers/` | npm `@meddleware/nft-gate-gateway`, `wrangler deploy` | Durable Objects (default) or KV |
+| Rust / Axum | `gateway-rust/` | crates.io `nft-gate-gateway`, Docker `meddleware/nft-gate-gateway` | in memory, or Redis/Dragonfly for more than one replica |
+
+Both query the chain over Sui **gRPC**.
+
+## Routes
+
+| Route | Auth | Behaviour |
 | --- | --- | --- |
-| Rust/Axum | `services/nft-gate/gateway/` | Self-hosted, k8s, low latency |
-| Cloudflare Worker | `services/nft-gate/worker/` | Edge deployment, zero-infra |
+| `GET /v1/challenge` | none | `{ nonce, expiresAt }` — a fresh single-use nonce |
+| `PUBLIC_PATHS` (default `/v1/tip-config`) | none | proxied without a proof (the Workers gateway also rate-limits these per client IP and edge-caches `GET`s) |
+| everything else | access proof | verified, then proxied to `UPSTREAM_URL` |
 
----
+The proof travels as `Authorization: Bearer <token>` (or `X-Access-Proof`), where the token is
+`base64(JSON { address, nonce, signature, consumeDigest? })` and the signature is a Sui personal
+message over `nft-gate:access:<nonce>`. Clients build it with
+[`@meddleware/nft-gate-client`](./integration#proving-access-to-a-gateway).
 
-## Rust/Axum gateway
+## Configuration
 
-### Build
+| Variable | Required | Default | Notes |
+| --- | --- | --- | --- |
+| `UPSTREAM_URL` | ✓ | — | Base URL of the protected service |
+| `SUI_RPC_URL` | ✓ | testnet fullnode | Sui fullnode (gRPC) — use a mainnet node in production |
+| `NFT_TYPE` | ✓ | — | `<pkg>::access_gate::AccessNFT` or `::SoulboundAccessNFT` |
+| `GATE_ID` | | — | Only accept passes minted by this gate |
+| `SINGLE_USE` | | `false` | Require an on-chain `consume` bound to the nonce; each consume is redeemed once |
+| `PUBLIC_PATHS` | | `/v1/tip-config` | Comma-separated unauthenticated paths |
+| `RATE_LIMIT_PER_MIN` | | `30` | Per-address requests per minute (`0` disables) |
+| `MAX_BODY_BYTES` | | `262144` | Request body cap (256 KiB) — raise it for uploads |
+| `CHALLENGE_TTL_SECS` | | `300` | Nonce lifetime |
+| `OWNERSHIP_CACHE_TTL_MS` | | `0` | Cache ownership checks (`0` = check every request) |
+| `UPSTREAM_AUTH_HEADERS` | | — | `Name: value` pairs added to upstream requests (e.g. a Cloudflare Access service token) |
 
-```bash
-cd services/nft-gate/gateway
-cargo build --release
-```
+Implementation-specific settings (Workers: `NONCE_BACKEND`, `NONCE_SHARD`, quota guard; Rust:
+`BIND_ADDR`, `REDIS_URL`, prune interval) are in each implementation's README.
 
-### Configuration
-
-The gateway reads environment variables:
-
-| Variable | Description | Default |
-| --- | --- | --- |
-| `SUI_NETWORK` | `testnet` or `mainnet` | `testnet` |
-| `SUI_RPC_URL` | Sui gRPC endpoint | testnet default |
-| `JWT_SECRET` | HMAC-SHA256 signing secret (≥32 bytes) | — required |
-| `CHALLENGE_TTL_SECS` | Nonce expiry | `120` |
-| `TOKEN_TTL_SECS` | JWT lifetime | `3600` |
-| `LISTEN_ADDR` | Bind address | `0.0.0.0:3000` |
-| `LOG_LEVEL` | `debug`/`info`/`warn`/`error` | `info` |
-
-Create `.env`:
-
-```bash
-SUI_NETWORK=testnet
-JWT_SECRET=<at-least-32-random-bytes-base64>
-CHALLENGE_TTL_SECS=120
-TOKEN_TTL_SECS=3600
-```
-
-### Run
+## Deploy on Cloudflare Workers
 
 ```bash
-cargo run --release
-# or with .env file
-env $(cat .env | xargs) cargo run --release
-```
-
-### k8s deployment
-
-A `Deployment` and `Service` manifest live in `post-bootstrap/nft-gate/`. The gateway is exposed via nginx-ingress at `https://nft-gate.meddleware.co.uk`. Secrets are mounted from a k8s `Secret` object:
-
-```yaml
-env:
-  - name: JWT_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: nft-gate-secrets
-        key: jwt-secret
-```
-
----
-
-## Cloudflare Workers implementation
-
-The Worker implementation lives in `services/nft-gate/worker/`. It is functionally equivalent to the Rust gateway but runs at the Cloudflare edge.
-
-### Prerequisites
-
-- Cloudflare account with Workers enabled.
-- Wrangler CLI: `npm install -g wrangler`.
-
-### Configuration
-
-```toml
-# services/nft-gate/worker/wrangler.toml
-name = "nft-gate"
-main = "src/index.ts"
-compatibility_date = "2025-01-01"
-
-[vars]
-SUI_NETWORK = "testnet"
-CHALLENGE_TTL_SECS = "120"
-TOKEN_TTL_SECS = "3600"
-```
-
-Store secrets:
-
-```bash
-wrangler secret put JWT_SECRET
-# Paste a random ≥32-byte base64-encoded value
-```
-
-### Deploy
-
-```bash
-cd services/nft-gate/worker
+git clone https://github.com/meddleware-org/nft-gate.git
+cd nft-gate/gateway-workers
 npm install
-wrangler deploy
+# edit wrangler.toml: [[routes]] pattern + zone, and the non-secret [vars]
+npm run deploy                              # first deploy creates the Worker + Durable Object
+
+wrangler secret put UPSTREAM_URL            # https://your-origin.example.com
+wrangler secret put NFT_TYPE                # 0x<pkg>::access_gate::SoulboundAccessNFT
+wrangler secret put UPSTREAM_AUTH_HEADERS   # only if the origin is Access-locked
+curl https://gate.example.com/v1/challenge  # → {"nonce":"…","expiresAt":…}
 ```
 
----
+`[vars]` in `wrangler.toml` are overwritten on every deploy; keep credentials in secrets.
 
-## API endpoints
+A Worker runs at the edge, so `UPSTREAM_URL` must be publicly routable. Lock that origin so only
+the gateway can reach it — e.g. a Cloudflare Access application allowing only a service token, whose
+headers the gateway sends via `UPSTREAM_AUTH_HEADERS`. Without this, anyone can call the origin
+directly and skip the pass check.
 
-Both implementations expose the same HTTP API:
+## Deploy with Docker (Rust)
 
-### `POST /challenge`
-
-Request a challenge nonce for a pass.
-
-**Body:**
-```json
-{ "gateId": "0x...", "passId": "0x..." }
+```bash
+docker run -p 8080:8080 \
+  -e UPSTREAM_URL=http://relay:57391 \
+  -e SUI_RPC_URL=https://fullnode.testnet.sui.io:443 \
+  -e NFT_TYPE=0x<pkg>::access_gate::AccessNFT \
+  meddleware/nft-gate-gateway
 ```
 
-**Response:**
-```json
-{ "challenge": "meddleware-access:v1:<nonce>", "nonce": "<hex>" }
-```
+Run one replica with the in-memory nonce store, or set `REDIS_URL` before scaling out — otherwise a
+nonce could be accepted once per replica.
 
-### `POST /verify`
+## Responses
 
-Submit the signed challenge and receive a JWT.
+| Status | Meaning |
+| --- | --- |
+| `401` | no access proof |
+| `403` | malformed proof, bad signature, unknown/expired/reused nonce, missing consume (single-use), or the address holds no matching pass |
+| `409` | single-use: that consume was already redeemed, or a request using it is in flight (released again if the upstream fails) |
+| `413` | body above `MAX_BODY_BYTES` |
+| `429` | rate limit exceeded |
+| `502` | the gateway could not query the chain |
 
-**Body:**
-```json
-{
-  "gateId": "0x...",
-  "passId": "0x...",
-  "nonce": "<hex>",
-  "address": "0x...",
-  "signature": "<base64>"
-}
-```
+Anything else comes from the upstream.
 
-**Response:**
-```json
-{ "token": "<jwt>", "expiresAt": 1234567890 }
-```
+## Trust model
 
-### `GET /health`
+- The gateway, not the chain, enforces nonce freshness and single-use redemption; run one logical
+  nonce store per gateway.
+- Ownership is checked live unless `OWNERSHIP_CACHE_TTL_MS` is set; with caching, a pass sold or
+  burned keeps working until the entry expires.
+- A gateway trusts its Sui fullnode; point `SUI_RPC_URL` at a node you trust.
 
-Returns `{ "status": "ok" }`. Used by the relay registry ping check.
-
----
-
-## JSON-RPC deprecation notice
-
-::: warning Public fullnodes killed JSON-RPC in September 2026
-The gateway uses `@mysten/sui` v2.x which routes through gRPC/GraphQL automatically. Do not configure an RPC URL ending in `/json-rpc` — it will fail. If you are running your own fullnode, ensure the gRPC port is reachable.
-:::
-
-<!-- white-label: operator customization guide (custom JWT claims, RBAC, rate limits, enterprise SSO) — planned -->
+<!-- white-label: operator customization guide (custom domains, rate limits, multiple gates per upstream) — planned -->
