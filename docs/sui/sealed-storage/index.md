@@ -37,7 +37,7 @@ const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://full
 const seal = new SealController(
   {
     suiClient,
-    packageId: '0x9f0563bfe42fbd29932cd280cc47efe17f5339b4dc569eb110114665eecc231e', // seal_policies (testnet)
+    packageId: '0x42cc181f851ef702c1fddc9b925553f03b71784edff49d80fbc260055f86d612', // seal_policies (testnet)
     threshold: 2,
     serverConfigs: [
       // Mysten testnet committee (decentralised server, via the aggregator) + two independent servers

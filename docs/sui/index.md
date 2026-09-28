@@ -37,16 +37,20 @@ sui_token_template     ← not a shared deployment: each token is its own packag
 
 | Package | Package ID | Shared objects |
 | --- | --- | --- |
-| `access_gate` | `0x0bedd0b27d993d3292ca6a5315f7562de8bc0ff3752b445b4c53252c76f2d20d` | `PlatformConfig` `0x7c5aed0ce7f29a4dfb60657858df31c12410a67098b4bcdd1d8cb1e531be4884` |
-| `seal_policies` | `0x9f0563bfe42fbd29932cd280cc47efe17f5339b4dc569eb110114665eecc231e` | — (no `init`) |
+| `access_gate` | `0x1a81ca177db039585e575beeeee4759466e55910e936a6733e38dbb65025eea4` | `PlatformConfig` `0xe3b949cabe9a0574c03dfc924fb3f96e6f959f2bb86d053ed6229a241c3a23f7` |
+| `seal_policies` | `0x42cc181f851ef702c1fddc9b925553f03b71784edff49d80fbc260055f86d612` | — (no `init`) |
 
 Mainnet: not yet published. Published versions are immutable in intent: a new version is a new
 package ID, and gates, passes and ciphertexts stay bound to the version that created them.
 
-::: info Source ahead of deployment
-The repository sources include changes not yet in these packages (for `access_gate`: gate policies,
-u128 commission arithmetic and abort codes 9–10; for `seal_policies`: pause-aware `nft_gate`). They
-ship as new package IDs; each package's on-chain docs mark which features need the new version.
+Superseded testnet packages (`access_gate` `0x0bedd0…`, `seal_policies` `0x9f0563…`) stay immutable
+and keep serving what was created on them; new gates and content use the IDs above.
+
+::: info Platform terms
+Every gate of `access_gate` pays the platform: 0.2% of each sale, never less than 0.001 SUI and
+never more than 10% (so a paid pass costs at least 0.01 SUI), a one-off fee to make a gate free, and
+the same commission on airdrops. The terms live in `PlatformConfig` — see the
+[API reference](/sui/onchain/access-gate/api-reference#commission-and-fees).
 :::
 
 ## SDK packages

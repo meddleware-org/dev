@@ -64,33 +64,40 @@ it):
 
 ```ts
 import {
-  buildCreateGateTx, fetchOwnedGates, buildSetPriceTx, buildSetPausedTx, buildAirdropTx,
-  buildMakeGateImmutableTx, fetchPlatformCommission, minimumProfitablePriceMist,
+  buildCreateGateTx, fetchOwnedGates, buildSetPausedTx, buildAirdropTx, buildMakeGateFreeTx,
+  buildMakeGateImmutableTx, fetchPlatformConfig, minimumPaidPriceMist, gateCommissionMist,
 } from '@meddleware/nft-gate-client'
 
-// Price floor: the smallest price that earns ≥ 1 MIST of commission (500 MIST at 20 bps)
-const { commissionBps } = (await fetchPlatformCommission(client, gate.platformConfigId))!
-const floor = minimumProfitablePriceMist(commissionBps)
+// Platform terms: commission floor → minimum paid price (0.01 SUI by default), free-gate fee
+const platform = (await fetchPlatformConfig(client, PLATFORM_CONFIG_ID))!
+const minPrice = minimumPaidPriceMist(platform.minCommissionMist)
 
 await exec.signAndExecute(
-  buildCreateGateTx(PKG, {
-    priceMist: 1_000_000n, paymentRecipient: address, defaultUses: 0n, soulbound: true,
+  buildCreateGateTx(PKG, PLATFORM_CONFIG_ID, {
+    priceMist: minPrice, paymentRecipient: address, defaultUses: 0n, soulbound: true,
     autoBurnAtZero: false, nftName: 'Member pass', nftImageUrl: 'https://…', nftDescription: '…',
-    // policy: { freezeRequiresUnpaused: true, lockCommissionOnFreeze: false, pauseBlocksDecryption: true },
+    // policy: { freezeRequiresUnpaused: true, lockCommissionOnFreeze: false,
+    //           pauseBlocksDecryption: true, pauseBlocksAccess: false },
+    // A free gate instead: priceMist: 0n, freeGateFeeMist: platform.freeGateFeeMist
   }),
 )
 
 const gates = await fetchOwnedGates(client, address, PKG) // every gate this address administers
-const ctx = { packageId: PKG, gateId: gates[0].gateId, adminCapId: gates[0].adminCapId }
+const g = gates[0]
+const ctx = { packageId: PKG, gateId: g.gateId, adminCapId: g.adminCapId, platformConfigId: PLATFORM_CONFIG_ID }
 await exec.signAndExecute(buildSetPausedTx(ctx, true))
-await exec.signAndExecute(buildAirdropTx(ctx, friendAddress))
+// Airdrops pay the commission a sale at the current price would carry.
+await exec.signAndExecute(buildAirdropTx(ctx, friendAddress, gateCommissionMist(g, platform)))
 ```
 
+- **Pricing:** a paid price must be at least the platform minimum (abort 11); going free pays the
+  one-off free-gate fee (`buildMakeGateFreeTx(ctx, fee)`, or `set_price(0)` once it is paid —
+  otherwise abort 12).
 - **Policy** (optional, immutable): restrictions recorded on the gate at creation — no freezing
-  while paused, commission locked at freeze, pause blocks Seal decryption. Omitting it creates an
-  unrestricted gate; setting any flag needs a policy-aware `access_gate` version.
-- **Freeze** (`buildMakeGateImmutableTx(ctx, platformConfigId)`) is irreversible: it destroys the
-  `AdminCap`, ending all settings and airdrops; sales and uses continue.
+  while paused, commission locked at freeze, pause blocks Seal decryption, pause blocks pass use
+  (`consume` and gateways). Omitted flags default to off.
+- **Freeze** (`buildMakeGateImmutableTx(ctx)`) is irreversible: it destroys the `AdminCap`, ending
+  all settings and airdrops; sales and uses continue.
 
 ## Error handling
 
@@ -108,8 +115,13 @@ codes:
 | 6 | gate frozen (settings, airdrop) |
 | 7 | commission above 10% (platform) |
 | 8 | nonce shorter than 8 bytes |
-| 9 | platform treasury set to `@0x0` (policy-aware versions) |
-| 10 | freeze refused: gate paused and its policy requires unpaused (policy-aware versions) |
+| 9 | platform treasury set to `@0x0` |
+| 10 | freeze refused: gate paused and its policy requires unpaused |
+| 11 | paid price below the platform minimum (or 0 via `create_gate`) |
+| 12 | price 0 before the free-gate fee is paid |
+
+Code 1 also covers `consume` on a paused gate whose policy has `pause_blocks_access`, and 2 an
+underpaid free-gate fee or airdrop commission.
 
 Gateway HTTP errors (`401`, `403`, `409`, `429`, `502`) are described in
 [Deploy the gateway](./gateway#responses).

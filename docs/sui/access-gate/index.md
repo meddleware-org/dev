@@ -35,12 +35,13 @@ Most calls take an `AccessGateConfig`:
 ```ts
 import type { AccessGateConfig } from '@meddleware/nft-gate-client'
 
-const PKG = '0x0bedd0b27d993d3292ca6a5315f7562de8bc0ff3752b445b4c53252c76f2d20d' // access_gate (testnet)
+const PKG = '0x1a81ca177db039585e575beeeee4759466e55910e936a6733e38dbb65025eea4' // access_gate (testnet)
+const PLATFORM_CONFIG_ID = '0xe3b949cabe9a0574c03dfc924fb3f96e6f959f2bb86d053ed6229a241c3a23f7'
 
 const gate: AccessGateConfig = {
   packageId: PKG,
   gateId: GATE_ID,
-  platformConfigId: '0x7c5aed0ce7f29a4dfb60657858df31c12410a67098b4bcdd1d8cb1e531be4884',
+  platformConfigId: PLATFORM_CONFIG_ID,
   nftType: `${PKG}::access_gate::SoulboundAccessNFT`, // or ::AccessNFT
   soulbound: true,
 }

@@ -59,21 +59,21 @@ tx.moveCall({
 ### Passing a result into a later call
 
 A `moveCall` returns its results; pass them as arguments to later commands in the same PTB. Creating
-a gate with a restrictive policy builds the `GatePolicy` value first:
+a gate builds its `GatePolicy` value first:
 
 ```ts
 const [policy] = tx.moveCall({
   target: `${ACCESS_GATE_PACKAGE}::access_gate::new_gate_policy`,
-  arguments: [tx.pure.bool(true), tx.pure.bool(false), tx.pure.bool(true)],
+  arguments: [tx.pure.bool(true), tx.pure.bool(false), tx.pure.bool(true), tx.pure.bool(false)],
 })
 tx.moveCall({
-  target: `${ACCESS_GATE_PACKAGE}::access_gate::create_gate_with_policy`,
-  arguments: [/* price, recipient, uses, soulbound, auto-burn, name, image, description */ ...values, policy],
+  target: `${ACCESS_GATE_PACKAGE}::access_gate::create_gate`,
+  arguments: [tx.object(PLATFORM_CONFIG_ID), tx.pure.u64(priceMist),
+    /* recipient, uses, soulbound, auto-burn, name, image, description */ ...values, policy],
 })
 ```
 
-(`create_gate_with_policy` needs a policy-aware `access_gate` version — see its
-[API reference](/sui/onchain/access-gate/api-reference).)
+(See the `access_gate` [API reference](/sui/onchain/access-gate/api-reference) for every argument.)
 
 ## Simulate before sending
 
@@ -132,6 +132,8 @@ const ABORTS: Record<string, Record<number, string>> = {
     5: 'This pass or cap belongs to a different gate.',
     6: 'This gate is frozen.',
     10: 'This gate cannot be frozen while paused.',
+    11: 'The price is below the platform minimum.',
+    12: 'Pay the free-gate fee to make this gate free.',
   },
   nft_gate: { 2: 'Pass is for a different gate.', 3: 'Pass is used up.', 4: 'Gate is paused.' },
 }
