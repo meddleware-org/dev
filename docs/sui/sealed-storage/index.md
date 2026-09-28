@@ -30,7 +30,7 @@ npm install @meddleware/seal-client @mysten/seal @mysten/sui
 ```ts
 import { SuiGrpcClient } from '@mysten/sui/grpc'
 import { createDefaultRegistry } from '@meddleware/seal-client'
-import { SealController } from '@meddleware/seal-client/controller' // lazy-load: pulls in @mysten/seal
+import { SealController } from '@meddleware/seal-client/controller' // also on the main entry; the subpath lets apps lazy-load @mysten/seal
 
 const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
 
