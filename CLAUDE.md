@@ -24,7 +24,18 @@ npm run dev      # dev server
 npm run type-check
 ```
 
-No `gen:api` step. `npm run build` is the only required CI step.
+No `gen:api` (TypeDoc) step. The only prebuild is `gen:onchain` (run automatically by `build`/`dev`):
+
+- **On-chain docs are imported, never authored here.** For the Sui Move packages
+  (`access-gate-sui`, `seal-policies-sui`, `sui-token-template`) the canonical on-chain docs live in
+  each package repo (`docs/onchain/*.md` + `manifest.json`) and ship in its npm package.
+  `scripts/gen-onchain.mjs` (run by `build`/`dev`) copies the pages the manifest assigns to this site
+  into a git-ignored subtree and generates the sidebar (`docs/.vitepress/generated/`). Resolution is
+  `node_modules` by default, or `ONCHAIN_DOCS_ROOT=..` to preview sibling checkouts. Fails soft
+  (placeholder pages for every standard page name). Fix on-chain content in the Move repo, not here;
+  hand-written pages link to the imported ones instead of duplicating Move tables.
+
+`npm run build` is the only required CI step.
 
 ## White-label annotation convention
 

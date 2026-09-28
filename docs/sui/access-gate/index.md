@@ -49,13 +49,19 @@ import { Transaction } from '@mysten/sui/transactions'
 
 const tx = new Transaction()
 const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)])
-const [pass]  = tx.moveCall({
-  target: `${ACCESS_GATE_PACKAGE}::access_gate::buy`,
-  arguments: [tx.object(gateId), coin, tx.object(PLATFORM_CONFIG_ID)],
+// purchase(gate, platform, payment): mints the pass to the sender and refunds any overpayment —
+// it returns nothing, so there is no pass to transfer.
+tx.moveCall({
+  target: `${ACCESS_GATE_PACKAGE}::access_gate::purchase`,
+  arguments: [tx.object(gateId), tx.object(PLATFORM_CONFIG_ID), coin],
 })
-tx.transferObjects([pass], tx.pure.address(buyerAddress))
 await signAndExecute({ transaction: tx })
 ```
+
+The contract itself (objects, events, abort codes, replay rules for single-use passes) is documented
+with the Move package: [on-chain overview](/sui/onchain/access-gate/overview),
+[developer integration](/sui/onchain/access-gate/dev-guide) and
+[API reference](/sui/onchain/access-gate/api-reference).
 
 See [Integration guide](./integration) for the full purchase → verify flow and [Deploy the gateway](./gateway) for self-hosting the challenge/proof gateway.
 

@@ -19,11 +19,11 @@ async function buyPass(
 ): Promise<string> {
   const tx = new Transaction()
   const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(priceInMist)])
-  const [pass]  = tx.moveCall({
-    target: `${PACKAGE}::access_gate::buy`,
-    arguments: [tx.object(GATE_ID), coin, tx.object(PLATFORM)],
+  // purchase(gate, platform, payment) mints the pass to the sender and refunds overpayment.
+  tx.moveCall({
+    target: `${PACKAGE}::access_gate::purchase`,
+    arguments: [tx.object(GATE_ID), tx.object(PLATFORM), coin],
   })
-  tx.transferObjects([pass], tx.pure.address(signer.address))
 
   const digest = await signer.signAndExecute(tx)
   return digest

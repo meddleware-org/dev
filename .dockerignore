@@ -1,0 +1,10 @@
+node_modules
+dist
+docs/.vitepress/dist
+docs/.vitepress/cache
+# generated at build time (gen:onchain)
+docs/sui/onchain
+docs/.vitepress/generated
+.git
+.github
+*.log

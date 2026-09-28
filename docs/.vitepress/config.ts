@@ -1,11 +1,20 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type DefaultTheme } from 'vitepress'
 import { fileURLToPath } from 'node:url'
+import { existsSync, readFileSync } from 'node:fs'
 
 // Developer documentation for the Meddleware platform. Integration guides, design-system usage,
 // self-host runbooks, and Sui development patterns. User-facing product docs live at docs.meddleware.co.uk.
 // Output is pinned to the repo-root dist/ so the Dockerfile's `COPY --from=build /app/dist` works unchanged.
 const outDir = fileURLToPath(new URL('../../dist', import.meta.url))
 const srcDir = fileURLToPath(new URL('..', import.meta.url))
+
+// Sidebar groups for the canonical on-chain docs imported from the Sui Move package repos by
+// scripts/gen-onchain.mjs (generated, git-ignored). Absent (e.g. `vitepress dev` without the
+// prebuild step) → no on-chain groups; the rest of the site is unaffected.
+const onchainSidebarFile = fileURLToPath(new URL('./generated/onchain-sidebar.json', import.meta.url))
+const onchainSidebar: DefaultTheme.SidebarItem[] = existsSync(onchainSidebarFile)
+  ? JSON.parse(readFileSync(onchainSidebarFile, 'utf8'))
+  : []
 
 export default defineConfig({
   title: 'Meddleware Dev',
@@ -109,6 +118,8 @@ export default defineConfig({
             // TODO white-label: { text: 'White-label operator guide', link: '/sui/dao/operator' }
           ],
         },
+        // Canonical on-chain docs (generated from the Move packages — scripts/gen-onchain.mjs).
+        ...onchainSidebar,
       ],
     },
 
