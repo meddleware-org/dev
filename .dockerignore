@@ -8,3 +8,5 @@ docs/.vitepress/generated
 .git
 .github
 *.log
+# Local-only env files must never reach the build (Vite loads .env*.local in every mode).
+.env*.local
