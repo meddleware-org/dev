@@ -35,13 +35,19 @@ sui_token_template     ← not a shared deployment: each token is its own packag
 
 ### Testnet deployments
 
-| Package | Package ID | Shared objects |
-| --- | --- | --- |
-| `access_gate` | `0x1a81ca177db039585e575beeeee4759466e55910e936a6733e38dbb65025eea4` | `PlatformConfig` `0xe3b949cabe9a0574c03dfc924fb3f96e6f959f2bb86d053ed6229a241c3a23f7` |
-| `seal_policies` | `0x42cc181f851ef702c1fddc9b925553f03b71784edff49d80fbc260055f86d612` | — (no `init`) |
+| Package | Original ID (types, events) | Published at (call targets) | Shared objects |
+| --- | --- | --- | --- |
+| `access_gate` | `0x1a81ca177db039585e575beeeee4759466e55910e936a6733e38dbb65025eea4` | same (v1) | `PlatformConfig` `0xe3b949cabe9a0574c03dfc924fb3f96e6f959f2bb86d053ed6229a241c3a23f7` |
+| `seal_policies` | `0x42cc181f851ef702c1fddc9b925553f03b71784edff49d80fbc260055f86d612` | `0x8fcf9c39f35880c923fe811d7566d3f0352fc8b1d1c2652cac711810cb1f15cb` (v2) | — (no `init`) |
 
-Mainnet: not yet published. Published versions are immutable in intent: a new version is a new
-package ID, and gates, passes and ciphertexts stay bound to the version that created them.
+Type strings, event filters and Seal identities use the original ID; Move calls use the latest
+published-at. Both are exported by the client packages (`@meddleware/access-gate-client/deployments`,
+`@meddleware/seal-client/deployments`), generated from each package's `Published.toml`.
+
+Mainnet: not yet published. A compatible upgrade (such as `seal_policies` v2, 2026-10-01) keeps the
+original ID, so existing gates, passes and ciphertexts stay valid and only the call target moves. A
+breaking change is a new package with a new original ID; what was created on the old one stays bound
+to it.
 
 Superseded testnet packages (`access_gate` `0x0bedd0…`, `seal_policies` `0x9f0563…`) stay immutable
 and keep serving what was created on them; new gates and content use the IDs above.

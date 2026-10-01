@@ -31,13 +31,19 @@ npm install @meddleware/seal-client @mysten/seal @mysten/sui
 import { SuiGrpcClient } from '@mysten/sui/grpc'
 import { createDefaultRegistry } from '@meddleware/seal-client'
 import { SealController } from '@meddleware/seal-client/controller' // also on the main entry; the subpath lets apps lazy-load @mysten/seal
+import { sealPoliciesDeployment } from '@meddleware/seal-client/deployments'
 
 const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
+
+// originalId: identities are bound to it (never changes); publishedAt: the latest version, the
+// target of seal_approve calls. Both come from the package's recorded deployments.
+const { originalId, publishedAt } = sealPoliciesDeployment('testnet')
 
 const seal = new SealController(
   {
     suiClient,
-    packageId: '0x42cc181f851ef702c1fddc9b925553f03b71784edff49d80fbc260055f86d612', // seal_policies (testnet)
+    originalId,
+    publishedAt,
     threshold: 2,
     serverConfigs: [
       // Mysten testnet committee (decentralised server, via the aggregator) + two independent servers
