@@ -7,14 +7,20 @@ pass flavour), anyone can buy a pass, and a service — a relay, a website, a Se
 holders. Each purchase pays the platform commission (`PlatformConfig`, ≤ 10%) and the rest to the
 gate's recipient, in one transaction.
 
-[`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) builds
-the transactions and reads, and produces the access proofs that an
-[nft-gate gateway](./gateway) verifies.
+Two packages:
+
+- [`@meddleware/access-gate-client`](https://www.npmjs.com/package/@meddleware/access-gate-client)
+  — the `access_gate` client: typed reads, typed events, transaction builders, abort messages and
+  the deployed ids per network.
+- [`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) — the
+  gateway wire protocol: fetch a challenge and build the access proof an
+  [nft-gate gateway](./gateway) verifies.
 
 ## Install
 
 ```bash
-npm install @meddleware/nft-gate-client @mysten/sui
+npm install @meddleware/access-gate-client @mysten/sui
+npm install @meddleware/nft-gate-client   # only to prove access to a gateway
 ```
 
 ## Key concepts
@@ -30,19 +36,21 @@ npm install @meddleware/nft-gate-client @mysten/sui
 
 ## Configure a gate
 
-Most calls take an `AccessGateConfig`:
+The deployed ids come from the package, per network. There are two package ids, equal until the
+package is upgraded: transactions call the latest **`publishedAt`**; types and events are matched
+at the **`originalId`**.
 
 ```ts
-import type { AccessGateConfig } from '@meddleware/nft-gate-client'
+import { accessNftType, type AccessGateConfig } from '@meddleware/access-gate-client'
+import { accessGateDeployment } from '@meddleware/access-gate-client/deployments'
 
-const PKG = '0x1a81ca177db039585e575beeeee4759466e55910e936a6733e38dbb65025eea4' // access_gate (testnet)
-const PLATFORM_CONFIG_ID = '0xe3b949cabe9a0574c03dfc924fb3f96e6f959f2bb86d053ed6229a241c3a23f7'
+const { originalId, publishedAt, platformConfigId } = accessGateDeployment('testnet')
 
 const gate: AccessGateConfig = {
-  packageId: PKG,
+  packageId: publishedAt,
   gateId: GATE_ID,
-  platformConfigId: PLATFORM_CONFIG_ID,
-  nftType: `${PKG}::access_gate::SoulboundAccessNFT`, // or ::AccessNFT
+  platformConfigId,
+  nftType: accessNftType(originalId, /* soulbound */ true), // …::SoulboundAccessNFT or ::AccessNFT
   soulbound: true,
 }
 ```
@@ -51,11 +59,11 @@ const gate: AccessGateConfig = {
 
 ```ts
 import { SuiGrpcClient } from '@mysten/sui/grpc'
-import { ownsAccessNft, buildPurchaseTx } from '@meddleware/nft-gate-client'
+import { ownsAccessNft, buildPurchaseTx } from '@meddleware/access-gate-client'
 
 const client = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
 
-// Does this wallet hold a pass for the gate?
+// Does this wallet hold a pass for the gate? (exact type match; reads every page)
 const hasAccess = await ownsAccessNft(client, address, gate.nftType, gate.gateId)
 
 // If not, buy one (the wallet signs; overpayment is refunded on-chain)

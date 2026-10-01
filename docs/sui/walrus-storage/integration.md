@@ -11,47 +11,55 @@ Meddleware's relay, `https://sui-walrus-relay-testnet.meddleware.co.uk`, is the 
 wallet-signed access proof; `GET /v1/tip-config` is public.
 
 The testnet gateway runs in **single-use** mode: each upload spends one use of an access pass, so
-the proof must carry the digest of an on-chain `consume` bound to the gateway's challenge nonce:
+the proof must carry the digest of an on-chain `consume` bound to the gateway's challenge nonce.
+`@meddleware/walrus-client/flow` runs the whole upload, including that step:
 
 ```ts
-import { buildConsumeTx, fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
-import { createWalrusClient } from '@meddleware/walrus-client'
+import { consumeStorageKey, createGatedAccess, runBlobUpload } from '@meddleware/walrus-client/flow'
+import { buildConsumeTx } from '@meddleware/access-gate-client'
 
 const RELAY = 'https://sui-walrus-relay-testnet.meddleware.co.uk'
 
-// 1. Fresh challenge from the gateway
-const challenge = await fetchChallenge(RELAY)
-
-// 2. Spend one use on-chain, binding it to that nonce (one wallet approval)
-const consume = await exec.signAndExecute(buildConsumeTx(gateConfig, passId, challenge.nonce))
-await exec.waitForTransaction(consume.digest)
-
-// 3. Sign the challenge and attach the consume digest
-const token = await buildAccessProof({
+const access = createGatedAccess({
+  storage: localStorage,
+  key: consumeStorageKey('testnet', gateConfig.gateId, address),
+  relayHost: RELAY,
   address,
-  challenge,
+  nftId: passId,
+  singleUse: usesRemaining !== null, // an unlimited pass only signs
+  buildConsume: (id, nonce) => buildConsumeTx(gateConfig, id, nonce),
+  signAndExecute: (tx) => exec.signAndExecute(tx),
+  waitForTransaction: (digest) => exec.waitForTransaction(digest),
   sign: (message) => wallet.signPersonalMessage({ message }),
-  consumeDigest: consume.digest,
 })
 
-// 4. Upload through the relay with the token
-const walrus = createWalrusClient({
-  network: 'testnet',
-  wasmUrl,
-  uploadRelayHost: RELAY,
-  uploadRelayAuthToken: token,
+const { blobId, url } = await runBlobUpload({
+  bytes, network: 'testnet', relayHost: RELAY, address, epochs: 53, wasmUrl,
+  executor: exec, suiClient, access,
+  onStatus: ({ step, detail }) => console.log(step, detail),
 })
-// …then createBlobUploadFlow / createUploadFlow as in the SDK setup page
 ```
 
-For a gateway **without** single-use mode, skip step 2 and use the one-call helper
-`createRelayAccessToken({ relayHost, address, sign })` from `@meddleware/walrus-client`.
+What the flow guarantees:
 
-`gateConfig` is the `AccessGateConfig` (`{ packageId, gateId, platformConfigId, nftType, soulbound }`)
-of the gate the relay checks, and `passId` a pass the wallet holds for it (see
-[Access Gate](/sui/access-gate/)). The ready-made Vue implementation of this flow is
-`useAccessGate().consumeAndBuildToken` in
-[`@meddleware/walrus-relay`](https://www.npmjs.com/package/@meddleware/walrus-relay).
+- **The consume is never wasted.** Its digest is persisted before the upload and reused if the
+  upload is interrupted; it is cleared once the upload lands. If the gateway answers `409 redeemed`
+  (an earlier upload already used it), one new use is spent and the upload retried on the same
+  registration.
+- **Register is never resumed** (see Tips below).
+- **A certify-only failure is retryable** without re-uploading: `getCertifyRetry(err)` returns the
+  retry; `savePendingCertify` keeps the certificate so certify can finish after a reload.
+- **Duplicates are caught before paying:** pass `findExistingCopy` and an existing owned copy aborts
+  before register (`getDuplicateExisting(err)`).
+
+For a gateway **without** single-use mode, `createRelayAccessToken({ relayHost, address, sign })` from
+`@meddleware/walrus-client` returns a token to pass as `createWalrusClient({ uploadRelayAuthToken })`.
+
+`gateConfig` is the `AccessGateConfig` of the gate the relay checks — `relayGateConfig(network,
+{ gateId, soulbound, priceMist })` from
+[`@meddleware/walrus-relay`](https://www.npmjs.com/package/@meddleware/walrus-relay) builds it with
+Meddleware's deployment — and `passId` a pass the wallet holds for it (see
+[Access Gate](/sui/access-gate/)).
 
 ### Tips
 

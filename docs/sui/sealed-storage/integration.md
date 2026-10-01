@@ -52,7 +52,7 @@ const plaintext = await seal.decrypt(
 
 The first decrypt for an address asks the wallet for one personal-message signature (the Seal
 session key); later decrypts reuse it until it expires. Find the reader's pass with
-`fetchAccessNfts(client, address, nftType, gateId)` from `@meddleware/nft-gate-client`.
+`fetchAccessNfts(client, address, nftType, gateId)` from `@meddleware/access-gate-client`.
 
 ## Publish a discovery pointer (optional)
 

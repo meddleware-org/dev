@@ -33,8 +33,8 @@ Every component is its own repository under [github.com/meddleware-org](https://
 | Layer | Repositories |
 | --- | --- |
 | Move packages | `access-gate-sui`, `seal-policies-sui`, `sui-token-template` |
-| TypeScript SDKs | `nft-gate-client`, `seal-client`, `walrus-client`, `wallet-adapter` |
-| Services | `nft-gate` (gateway: Workers + Rust) |
+| TypeScript SDKs | `access-gate-client`, `nft-gate-client`, `seal-client`, `walrus-client`, `wallet-adapter` |
+| Services | `nft-gate` (gateway: Workers + Rust), `sui-indexer` (display-only read-indexer) |
 | Apps | `walrus-ui`, `seal-ui`, `access-gate-ui`, `token-deployer-ui`, `dashboard` |
 | Shared UI | `design-tokens`, `ui`, `walrus-relay` |
 | Documentation | `docs` (docs.meddleware.co.uk), `dev` (this site) |

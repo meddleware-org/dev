@@ -57,9 +57,10 @@ the same commission on airdrops. The terms live in `PlatformConfig` — see the
 
 | Package | Purpose |
 | --- | --- |
-| [`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) | `access_gate` PTB builders (create, purchase, consume, admin), pass/gate reads, gateway challenge + access proof |
-| [`@meddleware/seal-client`](https://www.npmjs.com/package/@meddleware/seal-client) | `SealController` (threshold encrypt/decrypt, session keys), policy registry with `nft-gate` and `time-lock` providers, `sealed_content` pointers |
-| [`@meddleware/walrus-client`](https://www.npmjs.com/package/@meddleware/walrus-client) | Walrus client factory, upload flows, lifetime extension, attributes, owned-blob queries, relay access tokens |
+| [`@meddleware/access-gate-client`](https://www.npmjs.com/package/@meddleware/access-gate-client) | `access_gate` client: pass/gate/platform reads, typed events, transaction builders (create, purchase, consume, admin), abort messages, deployed ids per network (`/deployments`) |
+| [`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) | Gateway wire protocol: challenge + access proof (no dependencies) |
+| [`@meddleware/seal-client`](https://www.npmjs.com/package/@meddleware/seal-client) | `SealController` (threshold encrypt/decrypt, session keys), policy registry with `nft-gate` and `time-lock` providers, `sealed_content` pointers and listing, deployed ids (`/deployments`) |
+| [`@meddleware/walrus-client`](https://www.npmjs.com/package/@meddleware/walrus-client) | Walrus client factory, upload flows, lifetime extension, attributes, owned-blob queries, relay access tokens; the upload orchestrator (`/flow`) and an HTTP publisher/aggregator client (`/http`) |
 | [`@meddleware/wallet-adapter`](https://www.npmjs.com/package/@meddleware/wallet-adapter) | Vue 3 wallet-standard composable shared across tool views: connect, sign messages, execute PTBs |
 | [`@meddleware/walrus-relay`](https://www.npmjs.com/package/@meddleware/walrus-relay) | Vue 3 UI for the upload relay: relay selection, tip estimate, NFT-gate access, upload widget |
 | [`@meddleware/ui`](https://www.npmjs.com/package/@meddleware/ui) / [`@meddleware/design-tokens`](https://www.npmjs.com/package/@meddleware/design-tokens) | Components and tokens — see the [design system](/design-system/) |

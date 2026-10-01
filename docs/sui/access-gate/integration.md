@@ -1,12 +1,13 @@
 # Access Gate — Integration guide
 
-Examples use `gate` (an `AccessGateConfig`), a Core-API Sui `client`, and an executor `exec` that
-signs and executes transactions — see the [SDK setup](./).
+Examples use `gate` (an `AccessGateConfig`), the ids from `accessGateDeployment(network)`
+(`originalId`, `publishedAt`, `platformConfigId`), a Core-API Sui `client`, and an executor `exec`
+that signs and executes transactions — see the [SDK setup](./).
 
 ## Buying a pass
 
 ```ts
-import { buildPurchaseTx, fetchAccessNfts } from '@meddleware/nft-gate-client'
+import { buildPurchaseTx, fetchAccessNfts } from '@meddleware/access-gate-client'
 
 const { digest } = await exec.signAndExecute(buildPurchaseTx(gate, priceMist))
 await exec.waitForTransaction(digest)
@@ -15,13 +16,14 @@ const passes = await fetchAccessNfts(client, address, gate.nftType, gate.gateId)
 // [{ objectId, gateId, usesRemaining }] — usesRemaining is null for an unlimited pass
 ```
 
-Read the current price from the gate (`fetchGate(client, gateId)` → `priceMist`) rather than
-hard-coding it. A paused gate refuses purchases (`access_gate` abort 1).
+Read the current price from the gate (`fetchGate(client, gateId, originalId)` → `priceMist`)
+rather than hard-coding it. A paused gate refuses purchases (`access_gate` abort 1).
 
 ## Proving access to a gateway
 
 The wallet signs the gateway's challenge; the gateway checks the signature, that the nonce is fresh
-and unused, and that the address owns a pass for the gate.
+and unused, and that the address owns a pass for the gate. The challenge and proof come from
+`@meddleware/nft-gate-client`.
 
 ```ts
 import { fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
@@ -45,7 +47,7 @@ A gateway in single-use mode also requires an on-chain `consume` bound to the ch
 redeems each consume once:
 
 ```ts
-import { buildConsumeTx } from '@meddleware/nft-gate-client'
+import { buildConsumeTx } from '@meddleware/access-gate-client'
 
 const challenge = await fetchChallenge(GATEWAY)
 const consume = await exec.signAndExecute(buildConsumeTx(gate, passId, challenge.nonce))
@@ -57,6 +59,9 @@ const token = await buildAccessProof({ address, challenge, sign, consumeDigest: 
 `AccessConsumedEvent` records the nonce and the consumer, which is what the gateway matches.
 Exhausted passes are deleted if the gate auto-burns, otherwise kept as receipts.
 
+For a Walrus upload relay, `createGatedAccess` in `@meddleware/walrus-client/flow` wraps this: it
+persists the consume digest before the upload, so an interrupted upload never spends a second use.
+
 ## Operating gates
 
 Operators create and manage gates with the same library (the `access-gate-ui` console is built on
@@ -66,14 +71,14 @@ it):
 import {
   buildCreateGateTx, fetchOwnedGates, buildSetPausedTx, buildAirdropTx, buildMakeGateFreeTx,
   buildMakeGateImmutableTx, fetchPlatformConfig, minimumPaidPriceMist, gateCommissionMist,
-} from '@meddleware/nft-gate-client'
+} from '@meddleware/access-gate-client'
 
 // Platform terms: commission floor → minimum paid price (0.01 SUI by default), free-gate fee
-const platform = (await fetchPlatformConfig(client, PLATFORM_CONFIG_ID))!
+const platform = await fetchPlatformConfig(client, platformConfigId, originalId)
 const minPrice = minimumPaidPriceMist(platform.minCommissionMist)
 
 await exec.signAndExecute(
-  buildCreateGateTx(PKG, PLATFORM_CONFIG_ID, {
+  buildCreateGateTx(publishedAt, platformConfigId, {
     priceMist: minPrice, paymentRecipient: address, defaultUses: 0n, soulbound: true,
     autoBurnAtZero: false, nftName: 'Member pass', nftImageUrl: 'https://…', nftDescription: '…',
     // policy: { freezeRequiresUnpaused: true, lockCommissionOnFreeze: false,
@@ -82,9 +87,9 @@ await exec.signAndExecute(
   }),
 )
 
-const gates = await fetchOwnedGates(client, address, PKG) // every gate this address administers
+const gates = await fetchOwnedGates(client, address, originalId) // every gate this address administers
 const g = gates[0]
-const ctx = { packageId: PKG, gateId: g.gateId, adminCapId: g.adminCapId, platformConfigId: PLATFORM_CONFIG_ID }
+const ctx = { packageId: publishedAt, gateId: g.gateId, adminCapId: g.adminCapId, platformConfigId }
 await exec.signAndExecute(buildSetPausedTx(ctx, true))
 // Airdrops pay the commission a sale at the current price would carry.
 await exec.signAndExecute(buildAirdropTx(ctx, friendAddress, gateCommissionMist(g, platform)))
@@ -99,11 +104,32 @@ await exec.signAndExecute(buildAirdropTx(ctx, friendAddress, gateCommissionMist(
 - **Freeze** (`buildMakeGateImmutableTx(ctx)`) is irreversible: it destroys the `AdminCap`, ending
   all settings and airdrops; sales and uses continue.
 
+## Events
+
+```ts
+import { listAccessGateEvents } from '@meddleware/access-gate-client'
+
+const page = await listAccessGateEvents(client, {
+  originalId,
+  kinds: ['AccessMinted', 'AccessConsumed'], // default: all seven
+  gateId: g.gateId,                         // optional
+  limit: 20,
+  // indexer: { url: 'https://sui-indexer.meddleware.co.uk', network: 'testnet' }, // optional
+})
+// page.events — newest first, typed per kind (AccessConsumed carries `consumer` and `nonce`)
+// page.cursor — pass back as `cursor` for older events
+```
+
+Events are decoded from their BCS bytes and matched at the original id, so another package's
+same-named events are ignored. The optional read-indexer is for display only: a first page falls
+back to the full node when it fails, and nothing may authorise from it.
+
 ## Error handling
 
 Transactions that abort come back as `FailedTransaction`; read the module and code from
-`status.error.MoveAbort` ([PTB patterns](/sui/ptb-patterns#error-handling)). The `access_gate`
-codes:
+`status.error.MoveAbort` ([PTB patterns](/sui/ptb-patterns#error-handling)), or pass the error (or
+the failed status) to `abortMessage(error, originalId)`, which returns the message for an
+`access_gate` abort and `null` for anything else (`ACCESS_GATE_ABORTS` holds the table). The codes:
 
 | Code | Meaning |
 | --- | --- |
