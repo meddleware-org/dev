@@ -1,5 +1,9 @@
 # Changelog — @meddleware/dev
 
+## 0.0.16 (2026-10-02)
+
+- Ships the brand favicon (`/favicon.svg`); browsers no longer log a 404 for `/favicon.ico`.
+
 ## 0.0.15 (2026-10-02)
 
 - Testnet deployments: the version-gated `access_gate` `0xa55789…` and `seal_policies` `0x61c4aa…`,

@@ -26,7 +26,10 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: false,
   appearance: 'dark',
-  head: [['meta', { name: 'theme-color', content: '#5e1622' }]],
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['meta', { name: 'theme-color', content: '#5e1622' }],
+  ],
 
   themeConfig: {
     search: { provider: 'local' },
