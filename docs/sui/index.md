@@ -37,20 +37,25 @@ sui_token_template     ← not a shared deployment: each token is its own packag
 
 | Package | Original ID (types, events) | Published at (call targets) | Shared objects |
 | --- | --- | --- | --- |
-| `access_gate` | `0x1a81ca177db039585e575beeeee4759466e55910e936a6733e38dbb65025eea4` | same (v1) | `PlatformConfig` `0xe3b949cabe9a0574c03dfc924fb3f96e6f959f2bb86d053ed6229a241c3a23f7` |
-| `seal_policies` | `0x42cc181f851ef702c1fddc9b925553f03b71784edff49d80fbc260055f86d612` | `0x8fcf9c39f35880c923fe811d7566d3f0352fc8b1d1c2652cac711810cb1f15cb` (v2) | — (no `init`) |
+| `access_gate` | `0xa55789d77b8ae41e604c1c2e9ad9f7b034ca69b028ad0f1eee7d7cc8ad886d41` | same (v1) | `PlatformConfig` `0x53a325dc1ebd083c80fd5bed77e3e7cc989285283f188835793af3a7bd8504fa` |
+| `seal_policies` | `0x61c4aaa431cc33a41a9db34621e2925fc8eb4e3b3f1d70eaeb8d8c2b73507e42` | same (v1) | `PolicyConfig` `0xa5013eb407cac7e48b0b7f1cb5540b0e6115566dd01988b8f11fe77f4ebf3595` |
 
 Type strings, event filters and Seal identities use the original ID; Move calls use the latest
-published-at. Both are exported by the client packages (`@meddleware/access-gate-client/deployments`,
-`@meddleware/seal-client/deployments`), generated from each package's `Published.toml`.
+published-at. Every gated call also passes the package's shared version object (`PlatformConfig`,
+`PolicyConfig`): it names the only package version allowed to act, so an upgrade can retire old code
+everywhere at once. All of these are exported by the client packages
+(`@meddleware/access-gate-client/deployments`, `@meddleware/seal-client/deployments`), generated from
+each package's `Published.toml` and `deployments.json`.
 
-Mainnet: not yet published. A compatible upgrade (such as `seal_policies` v2, 2026-10-01) keeps the
-original ID, so existing gates, passes and ciphertexts stay valid and only the call target moves. A
+Mainnet: not yet published. A compatible upgrade keeps the original ID, so existing gates, passes and
+ciphertexts stay valid and only the call target moves; the upgrade then calls `migrate` on the version
+object. A
 breaking change is a new package with a new original ID; what was created on the old one stays bound
 to it.
 
-Superseded testnet packages (`access_gate` `0x0bedd0…`, `seal_policies` `0x9f0563…`) stay immutable
-and keep serving what was created on them; new gates and content use the IDs above.
+Superseded testnet packages (`access_gate` `0x1a81ca…` and `0x0bedd0…`, `seal_policies` `0x42cc18…`
+and `0x9f0563…`, replaced on 2026-10-02 by the version-gated packages) keep serving what was created on
+them; new gates and content use the IDs above.
 
 ::: info Platform terms
 Every gate of `access_gate` pays the platform: 0.2% of each sale, never less than 0.001 SUI and

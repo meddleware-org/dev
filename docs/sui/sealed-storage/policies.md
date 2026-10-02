@@ -15,10 +15,14 @@ is maintained with the package and imported into this site:
 
 | Module | Entry function | Access condition | Identity layout |
 | --- | --- | --- | --- |
-| `nft_gate` | `seal_approve(id, &Gate, &AccessNFT)` / `seal_approve_soulbound(id, &Gate, &SoulboundAccessNFT)` | caller holds a valid, non-exhausted pass for that gate | `[32-byte gate id][nonce]` |
-| `timelock` | `seal_approve(id, &Clock)` | on-chain clock ≥ `unlock_ms` | `[8-byte big-endian unlock_ms][nonce]` |
+| `nft_gate` | `seal_approve(id, &PolicyConfig, &Gate, &AccessNFT)` / `seal_approve_soulbound(id, &PolicyConfig, &Gate, &SoulboundAccessNFT)` | caller holds a valid, non-exhausted pass for that gate | `[32-byte gate id][nonce]` |
+| `timelock` | `seal_approve(id, &PolicyConfig, &Clock)` | on-chain clock ≥ `unlock_ms` | `[8-byte big-endian unlock_ms][nonce]` |
 
 `sealed_content::publish` is **not** a policy — it is a permissionless discovery registry.
+
+Every entry takes the package's shared `PolicyConfig` (from `sealPoliciesDeployment(network)`) and
+aborts unless it names the current package version, so an upgrade can retire old policy code for every
+key server at once. The client passes it for you.
 
 There is nothing to create or deploy per policy: you encrypt under an identity with
 `@meddleware/seal-client`, and at decryption time the client builds the approve transaction for the
@@ -60,12 +64,17 @@ Rules every policy MUST follow:
 - Namespace identities to the controlling object so one object's access never unlocks another's
   content.
 - Membership, not consumption: approval cannot spend anything, and a released key stays usable.
+- If the package will ever be upgraded, gate every entry on a versioned shared object (as
+  `seal_policies::config` does) so an upgrade can retire the old code; older versions stay callable
+  on-chain otherwise.
 
 ## Policy lifecycle
 
 - Encryption binds the ciphertext to a package ID and identity; it cannot be re-pointed afterwards.
-- An upgradeable policy package can change who may decrypt **all** existing ciphertext — burn its
-  `UpgradeCap` or hold it in a multisig before relying on it in production.
+- An upgradeable policy package can change who may decrypt **all** existing ciphertext. MeddleWare's
+  `seal_policies` moves its `UpgradeCap` to a multisig at each release and burns it on a planned date
+  after a verification window (the package's `CUSTODY.md`); do the same, or burn it, before relying on
+  your own policy package in production.
 
 ::: warning Pre-mainnet requirement
 The Seal key-server committee for mainnet is not yet formed; testnet policies work against the testnet

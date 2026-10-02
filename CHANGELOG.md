@@ -1,5 +1,15 @@
 # Changelog — @meddleware/dev
 
+## 0.0.15 (2026-10-02)
+
+- Testnet deployments: the version-gated `access_gate` `0xa55789…` and `seal_policies` `0x61c4aa…`,
+  with their shared version objects (`PlatformConfig`, `PolicyConfig`); the superseded packages are
+  listed. On-chain pages from `@meddleware/access-gate-sui` 0.0.5 and `@meddleware/seal-policies-sui`
+  0.0.6.
+- Sealed Storage guides: `SealController` and `buildPublishSealedContentTx` take `policyConfigId`;
+  policy signatures include `&PolicyConfig`; custom policies are told to version-gate upgradeable
+  packages; the custody note follows the package's `CUSTODY.md` lifecycle.
+
 ## 0.0.14 (2026-10-01)
 
 - Runs on static-server 0.1.3 (per-response CSP script nonce for Cloudflare JavaScript

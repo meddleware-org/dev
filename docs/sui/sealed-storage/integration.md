@@ -64,7 +64,8 @@ import { Transaction } from '@mysten/sui/transactions'
 import { buildPublishSealedContentTx, sealedContentEventType } from '@meddleware/seal-client'
 
 const tx = new Transaction()
-buildPublishSealedContentTx(tx, SEAL_POLICIES_PACKAGE, { gateId, blobId, sealId: id, label: 'Chapter 1' })
+// { publishedAt, policyConfigId } from sealPoliciesDeployment(network)
+buildPublishSealedContentTx(tx, { publishedAt, policyConfigId }, { gateId, blobId, sealId: id, label: 'Chapter 1' })
 await exec.signAndExecute(tx)
 ```
 

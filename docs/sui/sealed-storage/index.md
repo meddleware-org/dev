@@ -36,14 +36,16 @@ import { sealPoliciesDeployment } from '@meddleware/seal-client/deployments'
 const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
 
 // originalId: identities are bound to it (never changes); publishedAt: the latest version, the
-// target of seal_approve calls. Both come from the package's recorded deployments.
-const { originalId, publishedAt } = sealPoliciesDeployment('testnet')
+// target of seal_approve calls; policyConfigId: the shared version gate every seal_approve reads.
+// All three come from the package's recorded deployments.
+const { originalId, publishedAt, policyConfigId } = sealPoliciesDeployment('testnet')
 
 const seal = new SealController(
   {
     suiClient,
     originalId,
     publishedAt,
+    policyConfigId,
     threshold: 2,
     serverConfigs: [
       // Mysten testnet committee (decentralised server, via the aggregator) + two independent servers
