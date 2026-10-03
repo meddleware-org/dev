@@ -33,12 +33,14 @@ A time lock instead: `seal.encrypt('time-lock', { unlockMs: Date.parse('2027-01-
 
 ```ts
 import { parseSealedManifest, SealedManifestError } from '@meddleware/seal-client'
-import { walrusBlobUrl } from '@meddleware/walrus-client'
+import { WALRUS_AGGREGATOR_HOSTS } from '@meddleware/walrus-client'
+import { readBlob } from '@meddleware/walrus-client/http'
 
 const m = parseSealedManifest(untrustedJson)
 if (m.network !== 'testnet') throw new Error('Manifest is for another network')
 
-const ciphertext = new Uint8Array(await (await fetch(walrusBlobUrl('testnet', m.blobId))).arrayBuffer())
+// Timeout, size cap (100 MiB by default) and the aggregator's strict consistency check.
+const ciphertext = await readBlob(m.blobId, { aggregator: WALRUS_AGGREGATOR_HOSTS.testnet })
 
 // nft-gate needs the reader's pass: its object id, and whether the gate is soulbound
 const plaintext = await seal.decrypt(

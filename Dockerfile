@@ -23,14 +23,18 @@ ARG CSP
 RUN node scripts/check-csp-inline.mjs "${CSP}" dist
 
 # ── runtime stage ─────────────────────────────────────────────────────────────
-FROM quay.io/meddleware-org/static-server:0.1.3@sha256:664e1c460b4558e20bf3f1b6b2a7ef5e914392edc0a4a125867d6fa822ff92e5
+FROM quay.io/meddleware-org/static-server:0.1.4@sha256:14668bc29ce5489051db5d3fee5ecf7af842e98f0fde8a6f870264ed3ea6f1e4
 ARG CSP
 ENV CONTENT_SECURITY_POLICY="${CSP}"
 
 COPY --from=build /app/dist /app/public
 
+# A generated multi-page site: each clean URL is served from its own .html file and an unknown path
+# gets VitePress's 404 page with a real 404 status (no SPA fallback, which would answer 200 with
+# the home page).
 ENV SERVE_DIR=/app/public \
-    SPA_FALLBACK=true \
+    CLEAN_URLS=true \
+    NOT_FOUND_PAGE=/404.html \
     CACHE_IMMUTABLE_PREFIX=/assets/
 
 EXPOSE 8080

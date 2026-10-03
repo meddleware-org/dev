@@ -1,5 +1,12 @@
 # Changelog — @meddleware/dev
 
+## 0.0.17 (2026-10-03)
+
+- Blob reads use walrus-client's `readBlob` (timeout, size cap, strict consistency check) in the
+  Walrus Storage and Sealed Storage samples instead of a bare `fetch`.
+- Served with clean URLs and a real 404 page (static-server 0.1.4 `CLEAN_URLS`, `NOT_FOUND_PAGE`).
+- `@meddleware/*` dependencies at their latest versions.
+
 ## 0.0.16 (2026-10-02)
 
 - Ships the brand favicon (`/favicon.svg`); browsers no longer log a 404 for `/favicon.ico`.

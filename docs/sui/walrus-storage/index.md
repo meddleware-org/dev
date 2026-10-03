@@ -78,11 +78,16 @@ const { blobId } = await uploadLocalFile(walrus, 'assets/icon.png', 'icon.png', 
 
 ## Read a blob
 
-Blobs are public: fetch them from any Walrus aggregator.
+Blobs are public: read them from any Walrus aggregator. `readBlob` adds a timeout, a size cap
+(100 MiB by default; `maxBytes` to change it) and the aggregator's strict consistency check;
+`walrusBlobUrl` gives a plain URL for `<img src>` and links.
 
 ```ts
-import { walrusBlobUrl } from '@meddleware/walrus-client'
-const res = await fetch(walrusBlobUrl('testnet', blobId))
+import { WALRUS_AGGREGATOR_HOSTS, walrusBlobUrl } from '@meddleware/walrus-client'
+import { readBlob } from '@meddleware/walrus-client/http'
+
+const bytes = await readBlob(blobId, { aggregator: WALRUS_AGGREGATOR_HOSTS.testnet })
+const href = walrusBlobUrl('testnet', blobId)
 ```
 
 See the [integration guide](./integration) for lifetime management, owned-blob listing, attributes
