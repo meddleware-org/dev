@@ -64,6 +64,7 @@ jobs:
             --max-retries 3
             --retry-wait-time 2
             --accept 200,206,429
+            --root-dir ${{ github.workspace }}/docs
             --scheme https
             --scheme http
             docs/**/*.md
@@ -93,6 +94,7 @@ jobs:
             --max-retries 3
             --retry-wait-time 2
             --accept 200,206,429
+            --root-dir ${{ github.workspace }}/docs
             --scheme https
             --scheme http
             docs/**/*.md
