@@ -8,7 +8,7 @@
 # chain-configured; img-src allows https:/data:/blob: for on-chain images and local previews.
 ARG CSP="default-src 'self'; script-src 'self' 'sha256-2xX7WPApihAEgY57fPwQ4HRaWtCTrsAryoGVYhwtsA0=' 'sha256-ng8W1FnGVqbzCCV1hV2EGXSMN/WlYnkoQZy8x1kkcsM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
 
-FROM node:24-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS build
+FROM node:25-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS build
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ ARG CSP
 RUN node scripts/check-csp-inline.mjs "${CSP}" dist
 
 # ── runtime stage ─────────────────────────────────────────────────────────────
-FROM quay.io/meddleware-org/static-server:0.1.4@sha256:14668bc29ce5489051db5d3fee5ecf7af842e98f0fde8a6f870264ed3ea6f1e4
+FROM quay.io/meddleware-org/static-server:0.1.6@sha256:be51c4ee9c80fbbeda1f546efa918a72628388bd0fac0f52876e8234b51275c0
 ARG CSP
 ENV CONTENT_SECURITY_POLICY="${CSP}"
 
