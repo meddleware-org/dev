@@ -10,6 +10,8 @@ on:
     # outage never blocks a docs merge, but genuinely dead external links are still caught.
     - cron: "0 6 * * 1"
   workflow_dispatch:
+  # The release workflow runs the same checks on the tagged commit.
+  workflow_call:
 
 permissions:
   contents: read
@@ -50,6 +52,9 @@ jobs:
       # step is the internal-strict link gate.
       - name: Build (internal-strict dead-link detection)
         run: npm run build
+
+      - name: Third-party licence notices
+        run: npm run check:licenses && test -s dist/THIRD_PARTY_LICENSES
 
       # External links: robust (cache + retries + accept rate-limit/partial), non-blocking on PRs so
       # transient third-party downtime can't fail an unrelated docs change. The scheduled job below

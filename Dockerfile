@@ -17,7 +17,7 @@ RUN npm ci
 COPY . .
 
 # vitepress build → dist/ (outDir is pinned to the repo root dist/ in docs/.vitepress/config.ts)
-RUN npm run build
+RUN npm run build && npm run licenses
 ARG CSP
 # Every inline <script> VitePress emits must be allowed by the CSP hash list above.
 RUN node scripts/check-csp-inline.mjs "${CSP}" dist
@@ -28,6 +28,9 @@ ARG CSP
 ENV CONTENT_SECURITY_POLICY="${CSP}"
 
 COPY --from=build /app/dist /app/public
+# The lockfile lets SBOM scanners see the npm packages the bundle was built from (the bundle itself carries no
+# package metadata). It sits outside the served directory; THIRD_PARTY_LICENSES is served with the site.
+COPY --from=build /app/package-lock.json /usr/share/doc/dev/package-lock.json
 
 # A generated multi-page site: each clean URL is served from its own .html file and an unknown path
 # gets VitePress's 404 page with a real 404 status (no SPA fallback, which would answer 200 with

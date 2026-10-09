@@ -1,6 +1,6 @@
 {
   "name": "@meddleware/dev",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
@@ -25,7 +25,9 @@
     "lint:css": "stylelint \"docs/.vitepress/**/*.{css,vue}\"",
     "lint:js": "eslint .",
     "lint": "npm run lint:css && npm run lint:js && npm run lint:html",
-    "lint:html": "html-validate \"docs/.vitepress/**/*.vue\""
+    "lint:html": "html-validate \"docs/.vitepress/**/*.vue\"",
+    "licenses": "node scripts/third-party-licenses.mjs",
+    "check:licenses": "node scripts/third-party-licenses.mjs --check"
   },
   "publishConfig": {
     "access": "public"
