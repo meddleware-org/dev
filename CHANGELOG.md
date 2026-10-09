@@ -38,6 +38,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.19] - 2026-10-09
+
+### Changed
+
+- sui-token-template ^1.0.8 on-chain pages
+
 ## [0.0.18] - 2026-10-09
 
 ### Changed
