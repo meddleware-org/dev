@@ -38,7 +38,7 @@
     "@meddleware/access-gate-sui": "^0.0.6",
     "@meddleware/seal-policies-sui": "^0.0.7",
     "@meddleware/sui-token-template": "^1.0.7",
-    "@types/node": "~24.12.2",
+    "@types/node": "~26.6.4",
     "@vue/eslint-config-typescript": "^14.9.0",
     "eslint": "^10.11.0",
     "eslint-plugin-vue": "^10.11.1",
