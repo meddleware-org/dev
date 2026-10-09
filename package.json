@@ -1,6 +1,6 @@
 {
   "name": "@meddleware/dev",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
@@ -31,13 +31,13 @@
     "access": "public"
   },
   "dependencies": {
-    "@meddleware/design-tokens": "^0.1.8",
-    "@meddleware/ui": "^0.1.30"
+    "@meddleware/design-tokens": "^0.1.9",
+    "@meddleware/ui": "^0.1.31"
   },
   "devDependencies": {
-    "@meddleware/access-gate-sui": "^0.0.5",
-    "@meddleware/seal-policies-sui": "^0.0.6",
-    "@meddleware/sui-token-template": "^1.0.6",
+    "@meddleware/access-gate-sui": "^0.0.6",
+    "@meddleware/seal-policies-sui": "^0.0.7",
+    "@meddleware/sui-token-template": "^1.0.7",
     "@types/node": "~24.12.2",
     "@vue/eslint-config-typescript": "^14.9.0",
     "eslint": "^10.11.0",

@@ -37,3 +37,10 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Design system: consuming `@meddleware/design-tokens` and `@meddleware/ui`
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
+
+## [0.0.18] - 2026-10-09
+
+### Changed
+
+- Testnet identifiers follow the 2026-10-09 publications (access-gate-sui 0.0.6, seal-policies-sui 0.0.7); ui ^0.1.31, design-tokens ^0.1.9; image base static-server 0.1.6
+
