@@ -38,6 +38,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.21] - 2026-10-09
+
+### Changed
+
+- Testnet identifiers now match the 2026-10-09 publications (the previous release built without its docs edits); the audit file is excluded from the site
+
 ## [0.0.20] - 2026-10-09
 
 ### Changed

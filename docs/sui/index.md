@@ -37,8 +37,8 @@ sui_token_template     ← not a shared deployment: each token is its own packag
 
 | Package | Original ID (types, events) | Published at (call targets) | Shared objects |
 | --- | --- | --- | --- |
-| `access_gate` | `0xa55789d77b8ae41e604c1c2e9ad9f7b034ca69b028ad0f1eee7d7cc8ad886d41` | same (v1) | `PlatformConfig` `0x53a325dc1ebd083c80fd5bed77e3e7cc989285283f188835793af3a7bd8504fa` |
-| `seal_policies` | `0x61c4aaa431cc33a41a9db34621e2925fc8eb4e3b3f1d70eaeb8d8c2b73507e42` | same (v1) | `PolicyConfig` `0xa5013eb407cac7e48b0b7f1cb5540b0e6115566dd01988b8f11fe77f4ebf3595` |
+| `access_gate` | `0xd7ddaa94b74330979b2b618fc81206d160a264f1c9ca148a77fa2144301388c9` | same (v1) | `PlatformConfig` `0x3f81489df58233d96798f34ad44de325e1b4df7e4d615affe72ca181969ee7b5` |
+| `seal_policies` | `0x0c8f73490b14836e6a7a724fb46b242cb061d04a5f193fd637159997f8a1773d` | same (v1) | `PolicyConfig` `0xee0403ba15c250223527150d147f29bedfb1ec46bb2282c341be462ff0ad7d1a` |
 
 Type strings, event filters and Seal identities use the original ID; Move calls use the latest
 published-at. Every gated call also passes the package's shared version object (`PlatformConfig`,
