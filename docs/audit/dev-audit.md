@@ -19,7 +19,7 @@
 **Review date:** 2026-10-03 (first pass) · re-verified 2026-10-09 · fixes 2026-10-18 (0.0.23)
 **Reviewer:** Internal review
 **Severity ceiling:** Low — static content. Its code samples are copied into other people's apps, so a sample that teaches an unsafe pattern is the realistic harm.
-**Status:** re-verified 2026-10-09; 0.0.23 fixes applied 2026-10-18 (commit pending)
+**Status:** re-verified 2026-10-09; 0.0.23 fixes applied 2026-10-18 (commit `6de2998`)
 
 ---
 
@@ -152,7 +152,7 @@ the generated pages (its ids are checked at build time, F6).
 
 ### F6 — Testnet ids in the guides are typed by hand
 
-**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `scripts/check-onchain-ids.mjs`, `tests/check-onchain-ids.test.mjs`; commit pending)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `scripts/check-onchain-ids.mjs`, `tests/check-onchain-ids.test.mjs`; commit `6de2998`)
 **Where:** `docs/sui/index.md:40-41` (the "Testnet deployments" table); `docs/sui/sealed-storage/index.md:52-55`
 (Seal key-server object ids)
 **Issue:** the `access_gate` and `seal_policies` package ids and the `PlatformConfig` and `PolicyConfig`
@@ -182,7 +182,7 @@ seal-client 0.0.20): the page matches.
 
 ### F7 — Code samples no longer match the current client signatures
 
-**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `tests/samples.test.mjs`, `tests/samples-context.d.ts`; commit pending)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `tests/samples.test.mjs`, `tests/samples-context.d.ts`; commit `6de2998`)
 **Where:** `docs/sui/access-gate/integration.md:29-56` (`buildAccessProof`);
 `docs/sui/walrus-storage/integration.md:18-35` (`createGatedAccess`) and `:57` (`createRelayAccessToken`);
 `docs/sui/sealed-storage/index.md:36-58` and `integration.md:6-25` (`SealController`, `encrypt`)
@@ -225,7 +225,7 @@ self-test that a wrong call is reported at the right Markdown line. It runs in C
 
 ### F8 — The gateway guide describes the pre-v2 protocol and configuration
 
-**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `gateway.md`, `index.md`, `relay-self-host.md`; commit pending)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `gateway.md`, `index.md`, `relay-self-host.md`; commit `6de2998`)
 **Where:** `docs/sui/access-gate/gateway.md:28-31` and `:36-50`, `docs/sui/access-gate/index.md:35`
 **Issue:** the pages say the wallet signs `nft-gate:access:<nonce>` and list `GATE_ID` as optional. Since
 nft-gate 0.0.19 / nft-gate-client 0.0.16 the signed message is `nft-gate:access:v2`, multi-line, binding
@@ -251,7 +251,7 @@ gate; the samples that build the proof are type-checked (F7).
 
 ### F9 — The npm package carries generated and internal files
 
-**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `package.json` `files`, `scripts/check-dist-no-audit.mjs`, `tests/package-contents.test.mjs`; commit pending)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `package.json` `files`, `scripts/check-dist-no-audit.mjs`, `tests/package-contents.test.mjs`; commit `6de2998`)
 **Where:** `package.json` `files` (`"docs"`); there is no `.npmignore`
 **Issue:** `files` whitelists all of `docs/`, and the repository has no `.npmignore`, so
 `docs/sui/onchain/` and `docs/.vitepress/generated/` (copies of the Move packages' pages, produced by
@@ -275,7 +275,7 @@ unit-tested on a temporary tree.
 
 ### F10 — The CI workflow has no `npm test` step
 
-**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `npm test` in `node-ci.yml`; commit pending)
+**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `npm test` in `node-ci.yml`; commit `6de2998`)
 **Where:** `.github/workflows/node-ci.yml`; `docker-publish.yml` `verify` calls it; `npm-publish.yml` `verify`
 **Issue:** `node-ci.yml` runs the audit gate, type-check, the three linters, the build and the licence
 check, but no `npm test`; the image release's `verify` job is a call to it (0.0.22, `22e82bb`), so unit
@@ -314,7 +314,7 @@ scan runs at release).
 
 ### F12 — The template dependency range does not name the resolved version
 
-**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `package.json`; commit pending)
+**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `package.json`; commit `6de2998`)
 **Where:** `package.json` (`@meddleware/sui-token-template ^1.0.7`)
 **Issue:** the range resolves to 1.0.8 (the latest published; lockfile and `npm ls` 2026-10-09), which the
 on-chain pages need (supply and metadata policies applied in the coin's `init`), but the manifest does not
@@ -363,7 +363,7 @@ verifies signatures, so it would not run).
 
 ### F16 — The npm publish gate is a subset of CI
 
-**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `npm-publish.yml` `verify` calls `node-ci.yml`; commit pending)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `npm-publish.yml` `verify` calls `node-ci.yml`; commit `6de2998`)
 **Where:** `.github/workflows/npm-publish.yml`
 **Issue:** the npm job's `verify` runs `npm ci`, the audit gate, type-check and `npm run test
 --if-present`, not the full CI workflow (linters, build, licence check). The image release (F11) does run
@@ -377,7 +377,7 @@ type-check, unit tests, linters, build with the id check, and the licence check 
 
 ### F17 — Contributor documents disagree with the pipeline
 
-**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `CLAUDE.md`, `SECURITY.md`; commit pending)
+**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `CLAUDE.md`, `SECURITY.md`; commit `6de2998`)
 **Where:** `CLAUDE.md` ("`npm run build` is the only required CI step"); `SECURITY.md` invariant 1 (F6)
 **Issue:** CI also runs the audit gate, type-check, three linters and the licence check, and the image
 build runs the CSP check; `SECURITY.md` says ids are never hand-typed (F6). `CLAUDE.md` and the audit
