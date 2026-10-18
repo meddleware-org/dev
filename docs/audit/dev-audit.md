@@ -4,22 +4,22 @@
 **Project:** `repos/dev` — `@meddleware/dev`, VitePress developer documentation (`dev.meddleware.co.uk`): integration guides, PTB patterns, gateway and relay self-hosting, design system, imported on-chain developer pages
 **Project type:** Static site (VitePress)
 **Template:** AUDIT_TEMPLATE.md (2026-10-08) + AUDIT_TEMPLATE_TS.md (2026-10-08) + AUDIT_TEMPLATE_VUE.md (2026-10-08, hosting-header rows) + AUDIT_TEMPLATE_IMG.md (2026-10-08) + AUDIT_TEMPLATE_SITE.md (2026-09-30)
-**Package manager / lockfile:** npm 11, committed (also copied into the image for SBOM tools)   **Module format:** ESM (build scripts `.mjs`, VitePress config and theme TypeScript)   **Publish model:** image + npm package (ships `docs/`, `scripts/` and config; `NPM_PUBLISH` opt-in, enabled — `@meddleware/dev` 0.0.22 is on npm)
+**Package manager / lockfile:** npm 11, committed (also copied into the image for SBOM tools)   **Module format:** ESM (build scripts `.mjs`, VitePress config and theme TypeScript)   **Publish model:** image + npm package (ships `docs/`, `scripts/` and config; `NPM_PUBLISH` opt-in, enabled — `@meddleware/dev` 0.0.23 is on npm)
 **Runtime targets:** browser (static HTML); Node 24 for the build   **Peer dependencies:** none
 **Generator:** vitepress 2.0.0-alpha.20 (vue 3.5.44, TypeScript 6.0.3); vitest 5.0.5 (unit tests); no TypeDoc step (the API reference is on `docs.`)
 **Generated sources:** `scripts/gen-onchain.mjs` — the Move packages' `docs/onchain` pages from `@meddleware/access-gate-sui` 0.0.6, `seal-policies-sui` 0.0.7, `sui-token-template` 1.0.9 (lockfile; `ONCHAIN_DOCS_ROOT` is a local preview override only)
 **Audience:** developers and operators (user-facing documentation is `docs.meddleware.co.uk`)
 **Unpublished material:** `drafts/` (retired DAO page, vault notes) sits outside `srcDir`, is not in the npm `files` list and is never linked; this audit lives in `docs/audit/` and is excluded from the site by `srcExclude: ['audit/**']` (live `/audit/dev-audit` answers 404); `package.json` `files` negates it, the generated pages and the cache for the npm package, and the build fails if an audit page reaches `dist/` (F9, 0.0.23); white-label content is annotation-only (HTML comments, stripped by VitePress)
-**Images:** `quay.io/meddleware-org/dev:0.0.22@sha256:dfad63d6…ee1c` (Docker Hub mirror; cosign keyless, SPDX SBOM attestation, build provenance; cosign-verified 2026-10-09, `verify-digests.sh` 16/16)
-**Base images:** build `node:24-slim@sha256:0e0ff40c…f9b6`; runtime `quay.io/meddleware-org/static-server:0.1.8@sha256:e32cf42b…4000` in the 0.0.23 source (the deployed 0.0.22 image is on 0.1.7, `sha256:2e227311…2379`, Go 1.26.9)
+**Images:** `quay.io/meddleware-org/dev:0.0.23@sha256:e94eed8395950ad219813bce2c4f3b0b22fbb89061be641f4c552c2f3b9257d6` (Docker Hub mirror, same digest; cosign keyless signature verified 2026-10-18 against the workflow-anchored identity, `verify-digests.sh` 16/16; SPDX SBOM attestation, build provenance). Superseded 0.0.22 was `sha256:dfad63d6…ee1c`
+**Base images:** build `node:24-slim@sha256:0e0ff40c…f9b6`; runtime `quay.io/meddleware-org/static-server:0.1.8@sha256:e32cf42b…4000` in 0.0.23 (the 0.0.22 image deployed 2026-10-09 was on 0.1.7, `sha256:2e227311…2379`, Go 1.26.9)
 **Runtime user:** `USER 65534:65534`   **Runtime FS:** read-only root, no writable mounts
 **Deployed by:** `post-bootstrap/dev/overlays/default`; digest from `config/images.yaml`
 **Build args:** `CSP` only (the Content-Security-Policy string) — not secret, not a test switch; no `VITE_*`
-**Deployment status:** npm v0.0.22 and image `quay.io/meddleware-org/dev` 0.0.22 serving `dev.meddleware.co.uk` (`sha256:dfad63d6…`, deployed 2026-10-09; live `/sui/` carries the republished testnet ids `access_gate` `0xd7ddaa94…`, PlatformConfig `0x3f81489d…`, `seal_policies` `0x0c8f7349…`, PolicyConfig `0xee0403ba…`)
-**Review date:** 2026-10-03 (first pass) · re-verified 2026-10-09 · fixes 2026-10-18 (0.0.23)
+**Deployment status:** npm v0.0.23 and image `quay.io/meddleware-org/dev` 0.0.23 serving `dev.meddleware.co.uk` (`sha256:e94eed83…57d6`; release tag `v0.0.23` = `497bb5d`; released, signature verified and deployed 2026-10-18, rollout succeeded; 0.0.22 `sha256:dfad63d6…` was deployed 2026-10-09; live headers, `/sui/` (200), an unknown path (404) and `/THIRD_PARTY_LICENSES` (200) re-checked 2026-10-18; live `/sui/` carries the republished testnet ids `access_gate` `0xd7ddaa94…`, PlatformConfig `0x3f81489d…`, `seal_policies` `0x0c8f7349…`, PolicyConfig `0xee0403ba…`)
+**Review date:** 2026-10-03 (first pass) · re-verified 2026-10-09 · fixes 2026-10-18 (0.0.23, released and deployed)
 **Reviewer:** Internal review
 **Severity ceiling:** Low — static content. Its code samples are copied into other people's apps, so a sample that teaches an unsafe pattern is the realistic harm.
-**Status:** re-verified 2026-10-09; 0.0.23 fixes applied 2026-10-18 (commit `6de2998`)
+**Status:** re-verified 2026-10-09; 0.0.23 fixes applied 2026-10-18 (commit `6de2998`; released and deployed 2026-10-18, signature verified, rollout succeeded)
 
 ---
 
@@ -348,7 +348,7 @@ fix without that probe).
 **Impact:** a workflow added by someone with write access could sign an image the check would accept.
 **Remediation / evidence:** the repository is the signing boundary; anchoring to
 `docker-publish.yml@refs/tags/v*` is a `COSIGN_IDENTITY_REGEXP` override in the workspace script. The
-deployed digest verified 2026-10-09 (16/16). 2026-10-18: left as is (workspace-script change).
+deployed digests verified 2026-10-09 (0.0.22) and 2026-10-18 (0.0.23), 16/16 both times; the 2026-10-18 run used the workflow-anchored identity `docker-publish.yml@refs/tags/v*`, which is narrower than the repository-wide check this finding describes (disposition left to the workspace audit). 2026-10-18: left as is (workspace-script change).
 
 ### F15 — Self-hosted registry mirror and registry credentials
 
@@ -424,7 +424,7 @@ type-check and the audit never reaching `dist/` or the package.
 | TS | Compiler strictness, assertions, validation, money, network I/O, encoding, dynamic code | HOLDS — `strict: true` over the VitePress config and theme (`tsc --noEmit` in CI); the build scripts are `.mjs` and read `node_modules` only; no `v-html`, `eval` or `fetch` in the theme; the guides' samples are compiled in strict mode by `tests/samples.test.mjs` (F7) |
 | TS | Supply chain | HOLDS — `npm ci`, audit gate in CI and the npm job (1 allowlisted, 0 open), `npm@11.20.0` pinned in publish; packaging F9 fixed; first-party ranges at their latest (F12) |
 | TS | Test projects in CI | HOLDS (I11) — one vitest project (`tests/`), run by `node-ci.yml` and so by both release gates (F10) |
-| IMG | Base images, build context, reproducible build, no secrets, runtime user, scan, SBOM and notices | HOLDS (F11) — digest-pinned `node:24-slim` and static-server 0.1.8 (0.0.23 source); `.dockerignore` excludes `node_modules`, `dist`, caches, generated output, `.git`, `.github` and `.env*.local`; `npm ci`; the only `ARG` is the public `CSP`; Trivy before cosign; lockfile in the image; `/THIRD_PARTY_LICENSES` served |
+| IMG | Base images, build context, reproducible build, no secrets, runtime user, scan, SBOM and notices | HOLDS (F11) — digest-pinned `node:24-slim` and static-server 0.1.8 (0.0.23); `.dockerignore` excludes `node_modules`, `dist`, caches, generated output, `.git`, `.github` and `.env*.local`; `npm ci`; the only `ARG` is the public `CSP`; Trivy before cosign; lockfile in the image; `/THIRD_PARTY_LICENSES` served |
 | IMG | Verification command | GAP accepted — the identity pins the repository (F14) |
 | IMG | Deployment pinning | HOLDS — digest in `config/images.yaml` and the overlay; the base manifest's tag (`0.0.1`) is overridden by the overlay digest and is cosmetic |
 
@@ -440,7 +440,7 @@ type-check and the audit never reaching `dist/` or the package.
 | `@meddleware/ui`, `design-tokens` | `^0.1.31`, `^0.1.10` (latest) | theme | clean | |
 | `@meddleware/*` clients, `@mysten/*` | access-gate-client `^0.0.9`, seal-client `^0.0.20`, nft-gate-client `^0.0.17`, walrus-client `^0.0.28`, wallet-adapter `^0.0.17`; `@mysten/sui ^2.36.0`, `seal ^1.5.0`, `walrus ~1.2.35` (all dev dependencies) | tests and the id check only | clean | not shipped in the site; they are what the samples are compiled against (F6, F7) |
 | Link checker | lychee-action pinned by SHA | none | — | CI only |
-| `node:24-slim` / `static-server` | digest-pinned / 0.1.8 (0.0.23; the deployed 0.0.22 is on 0.1.7) | build / runtime | Trivy at release (F11); Go 1.26.9 (0.1.7) | — |
+| `node:24-slim` / `static-server` | digest-pinned / 0.1.8 (0.0.23, deployed 2026-10-18; 0.0.22 was on 0.1.7) | build / runtime | Trivy at release (F11); Go 1.26.9 (0.1.7) | — |
 | dev tooling | lockfile | no | GHSA-vfj7-8cjw-p6xm allowlisted to 2027-01-01 | TS lens B.TS-3 |
 
 Install-time code (TS B.TS-2): the lockfile has one lifecycle script, `fsevents` (dev, optional, macOS
@@ -481,7 +481,7 @@ inline-script rule is enforced at build time by `check-csp-inline.mjs` (SITE and
 
 ### B.VUE-2 / B.IMG Build inputs and artifacts
 
-`node:24-slim@sha256:0e0ff40c…` builder and `static-server:0.1.8@sha256:e32cf42b…` runtime (0.0.23 source; the deployed image is on 0.1.7), both
+`node:24-slim@sha256:0e0ff40c…` builder and `static-server:0.1.8@sha256:e32cf42b…` runtime (0.0.23, deployed 2026-10-18; the 0.0.22 image was on 0.1.7), both
 digest-pinned (Dependabot Docker group); `npm ci`; `.dockerignore` excludes local installs, build output,
 VCS data and every `.env*.local`; `npm run build && npm run licenses` run in the build stage; the runtime
 stage copies `dist` and the lockfile only; `USER 65534:65534`; the only `ARG` is the public `CSP`;
@@ -536,8 +536,8 @@ production build and the generator run from a clean checkout in CI. Not covered:
 
 ### pre-testnet
 
-- [x] deployed with digest pinning; CSP and HSTS verified
-- [x] 0.0.22 deployed by digest; live probe of a deep link and an unknown path, headers and `/THIRD_PARTY_LICENSES` (2026-10-10)
+- [x] deployed with digest pinning; CSP and HSTS verified (re-read on 0.0.23 on 2026-10-18 with `curl -I`: CSP, HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`)
+- [x] 0.0.23 deployed by digest (2026-10-18; 0.0.22 on 2026-10-09); live probe of a deep link and an unknown path, headers and `/THIRD_PARTY_LICENSES` (2026-10-10 on 0.0.22; on 0.0.23 on 2026-10-18: `/` 200, `/sui/` 200, an unknown path 404, `/THIRD_PARTY_LICENSES` 200, headers present)
 - [x] inline scripts hash-covered and checked at build time (`check-csp-inline.mjs`, 29 pages); link check in CI (F3)
 - [x] image: digest-pinned bases, non-root, restricted pod, probes and limits, signed with SBOM and provenance, scanned before signing (F11)
 - [x] on-chain facts checked against the canonical record — `check-onchain-ids.mjs` in `build`, the `deployments` of access-gate-client 0.0.9 and seal-client 0.0.20, `tests/check-onchain-ids.test.mjs` (F6, 0.0.23, 2026-10-18)
@@ -635,3 +635,4 @@ None.
   Section D ticked with evidence; the mainnet-blocked, credential and external-review boxes stay open. Local
   checks: type-check, lint (css, js, html), `npm test` (18 tests), build with the id and dist checks, CSP
   check (29 pages), `check:licenses`, audit gate (1 allowlisted, 0 open), `npm pack --dry-run`.
+- 2026-10-18 — released and deployed (`v0.0.23` = `497bb5d`, `0.0.23@sha256:e94eed8395950ad219813bce2c4f3b0b22fbb89061be641f4c552c2f3b9257d6`), verified live. Cosign keyless signature verified against the workflow-anchored identity (`verify-digests.sh` 16/16); published to npm and as an image; rollout (`apply.sh dev`) succeeded; the page loads in headless Chromium with no console errors or CSP violations; re-read with `curl`: `/` and `/sui/` 200 with the security headers, an unknown path 404, `/THIRD_PARTY_LICENSES` 200. Mainnet-blocked, credential and external-review gates unchanged.
