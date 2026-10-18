@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  # The release runs exactly what CI runs (type-check, lint, tests, build, licences) on the tagged commit,
+  # The release runs exactly what CI runs (audit gate, type-check, lint, unit tests, build with the on-chain id check, licences) on the tagged commit,
   # so no check can be skipped by tagging.
   verify:
     name: Verify (CI checks)

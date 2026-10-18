@@ -27,25 +27,50 @@ Both query the chain over Sui **gRPC**.
 | everything else | access proof | verified, then proxied to `UPSTREAM_URL` |
 
 The proof travels as `Authorization: Bearer <token>` (or `X-Access-Proof`), where the token is
-`base64(JSON { address, nonce, signature, consumeDigest? })` and the signature is a Sui personal
-message over `nft-gate:access:<nonce>`. Clients build it with
-[`@meddleware/nft-gate-client`](./integration#proving-access-to-a-gateway).
+`base64(JSON { address, nonce, signature, consumeDigest? })`. The signature is a Sui personal message
+(protocol **`nft-gate:access:v2`**) that binds the proof to this gateway, so a proof made for another
+gateway, gate or network is useless here:
+
+```text
+nft-gate:access:v2
+origin:<GATEWAY_ORIGIN>
+gate:<GATE_ID>
+network:<NETWORK>
+nonce:<nonce>
+consume:<base58 digest>      (single-use gateways only)
+```
+
+The gateway rebuilds this message from its own configuration, so `GATEWAY_ORIGIN`, `GATE_ID` and
+`NETWORK` are required settings. The message grammar and the conformance `vectors.json` are defined
+by [`@meddleware/nft-gate-client`](https://github.com/meddleware-org/nft-gate-client#wire-protocol);
+clients build it with `buildAccessProof`, see
+[proving access to a gateway](./integration#proving-access-to-a-gateway).
 
 ## Configuration
 
 | Variable | Required | Default | Notes |
 | --- | --- | --- | --- |
-| `UPSTREAM_URL` | ✓ | — | Base URL of the protected service |
-| `SUI_RPC_URL` | ✓ | testnet fullnode | Sui fullnode (gRPC) — use a mainnet node in production |
-| `NFT_TYPE` | ✓ | — | `<pkg>::access_gate::AccessNFT` or `::SoulboundAccessNFT` |
-| `GATE_ID` | | — | Only accept passes minted by this gate |
-| `SINGLE_USE` | | `false` | Require an on-chain `consume` bound to the nonce; each consume is redeemed once |
+| `UPSTREAM_URL` | ✓ | — | Base URL of the protected service (a secret: it is never logged) |
+| `GATEWAY_ORIGIN` | ✓ | — | This gateway's canonical public origin (`https://host`, no path, lower-case); signed into every proof, so it must equal the hostname clients call |
+| `NETWORK` | ✓ | — | `localnet` \| `devnet` \| `testnet` \| `mainnet`; signed into every proof |
+| `SUI_RPC_URL` | ✓ | testnet fullnode (Workers) | Sui fullnode (gRPC) — use a mainnet node in production |
+| `NFT_TYPE` | ✓ | — | `<access_gate original id>::access_gate::AccessNFT` or `::SoulboundAccessNFT`; any other type is rejected at startup |
+| `GATE_ID` | ✓ | — | The gate whose passes are accepted; also read live, so a paused gate with `pause_blocks_access` denies its holders |
+| `SINGLE_USE` | | `false` | Require a `consumeDigest` naming a successful `consume` by the proof address on `GATE_ID`; each digest is redeemable once |
 | `PUBLIC_PATHS` | | `/v1/tip-config` | Comma-separated unauthenticated paths |
 | `RATE_LIMIT_PER_MIN` | | `30` | Per-address requests per minute (`0` disables) |
 | `MAX_BODY_BYTES` | | `262144` | Request body cap (256 KiB) — raise it for uploads |
 | `CHALLENGE_TTL_SECS` | | `300` | Nonce lifetime |
 | `OWNERSHIP_CACHE_TTL_MS` | | `0` | Cache ownership checks (`0` = check every request) |
-| `UPSTREAM_AUTH_HEADERS` | | — | `Name: value` pairs added to upstream requests (e.g. a Cloudflare Access service token) |
+| `UPSTREAM_AUTH_HEADERS` | | — | JSON array `[{"name":…,"value":…}]` of headers added to upstream requests (e.g. a Cloudflare Access service token); invalid JSON fails closed |
+| `ALLOWED_ORIGINS` | | none | Comma-separated canonical browser origins granted CORS; unset grants none |
+
+The table is a summary, checked against nft-gate 0.0.22 (`gateway-workers` and `gateway-rust`); a later
+release may add settings, so the READMEs are authoritative and hold the complete tables (timeouts, lease and
+retention windows, per-IP budgets):
+[Workers](https://github.com/meddleware-org/nft-gate/blob/main/gateway-workers/README.md#full-configuration-reference),
+[Rust](https://github.com/meddleware-org/nft-gate/blob/main/gateway-rust/README.md#configuration-environment-variables).
+Every value is validated at startup: a bad or missing required value is a refusal to serve, never a weaker mode.
 
 Implementation-specific settings (Workers: `NONCE_BACKEND`, `NONCE_SHARD`, quota guard; Rust:
 `BIND_ADDR`, `REDIS_URL`, prune interval) are in each implementation's README.
@@ -56,16 +81,19 @@ Implementation-specific settings (Workers: `NONCE_BACKEND`, `NONCE_SHARD`, quota
 git clone https://github.com/meddleware-org/nft-gate.git
 cd nft-gate/gateway-workers
 npm install
-# edit wrangler.toml: [[routes]] pattern + zone, and the non-secret [vars]
+# edit wrangler.toml: [[routes]] pattern + zone, and the public [vars]:
+#   GATEWAY_ORIGIN = "https://gate.example.com"   (the route's hostname)
+#   NETWORK        = "testnet"
+#   NFT_TYPE       = "0x<access_gate original id>::access_gate::SoulboundAccessNFT"
+#   GATE_ID        = "0x<gate id>"
 npm run deploy                              # first deploy creates the Worker + Durable Object
 
 wrangler secret put UPSTREAM_URL            # https://your-origin.example.com
-wrangler secret put NFT_TYPE                # 0x<pkg>::access_gate::SoulboundAccessNFT
 wrangler secret put UPSTREAM_AUTH_HEADERS   # only if the origin is Access-locked
 curl https://gate.example.com/v1/challenge  # → {"nonce":"…","expiresAt":…}
 ```
 
-`[vars]` in `wrangler.toml` are overwritten on every deploy; keep credentials in secrets.
+`[vars]` in `wrangler.toml` are overwritten on every deploy; they hold public values only (origin, network, the pass type and gate id). Keep credentials and the upstream URL in secrets. Until the required values are set the Worker answers `500 gateway misconfigured`.
 
 A Worker runs at the edge, so `UPSTREAM_URL` must be publicly routable. Lock that origin so only
 the gateway can reach it — e.g. a Cloudflare Access application allowing only a service token, whose
@@ -76,14 +104,22 @@ directly and skip the pass check.
 
 ```bash
 docker run -p 8080:8080 \
-  -e UPSTREAM_URL=http://relay:57391 \
+  -e GATEWAY_ORIGIN=https://gate.example.com \
+  -e NETWORK=testnet \
+  -e UPSTREAM_URL=http://relay:57391 -e ALLOW_INSECURE_HTTP=1 \
   -e SUI_RPC_URL=https://fullnode.testnet.sui.io:443 \
-  -e NFT_TYPE=0x<pkg>::access_gate::AccessNFT \
+  -e NFT_TYPE=0x<access_gate original id>::access_gate::AccessNFT \
+  -e GATE_ID=0x<gate id> \
   meddleware/nft-gate-gateway
 ```
 
-Run one replica with the in-memory nonce store, or set `REDIS_URL` before scaling out — otherwise a
-nonce could be accepted once per replica.
+`ALLOW_INSECURE_HTTP=1` is needed only for an `http://` upstream inside your own network; otherwise
+both URLs must be `https://`. Run one replica with the in-memory nonce store, or set `REDIS_URL` before
+scaling out — otherwise a nonce could be accepted once per replica. With `SINGLE_USE=true` the Rust
+gateway requires `REDIS_URL` (spent consumes must survive a restart).
+
+The Rust gateway is kept at parity with the Workers one; the Meddleware deployment runs the Workers
+gateway.
 
 ## Responses
 
@@ -91,7 +127,7 @@ nonce could be accepted once per replica.
 | --- | --- |
 | `401` | no access proof |
 | `403` | malformed proof, bad signature, unknown/expired/reused nonce, missing consume (single-use), or the address holds no matching pass |
-| `409` | single-use: that consume was already redeemed, or a request using it is in flight (released again if the upstream fails) |
+| `409` | single-use: body `code` is `redeemed` (that consume was already spent) or `leased` (a request using it is in flight; released again if the upstream fails) — `GATEWAY_CONFLICT_CODES` in `nft-gate-client` |
 | `413` | body above `MAX_BODY_BYTES` |
 | `429` | rate limit exceeded |
 | `502` | the gateway could not query the chain |

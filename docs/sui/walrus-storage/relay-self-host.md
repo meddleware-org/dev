@@ -54,7 +54,8 @@ Deploy an nft-gate gateway ([deployment guide](/sui/access-gate/gateway)) with:
 | Setting | Value for a relay |
 | --- | --- |
 | `UPSTREAM_URL` | the relay's origin URL |
-| `NFT_TYPE` / `GATE_ID` | the pass type and gate your users buy |
+| `GATEWAY_ORIGIN` / `NETWORK` | the gateway's public origin (`https://host`) and the Sui network; both are signed into every proof, so clients must call exactly that origin |
+| `NFT_TYPE` / `GATE_ID` | the pass type and the gate your users buy (both required) |
 | `PUBLIC_PATHS` | `/v1/tip-config` (clients read the tip before paying) |
 | `MAX_BODY_BYTES` | at least your largest upload (the default 256 KiB is far too small; Meddleware uses 100 MiB) |
 | `SINGLE_USE` | `true` to spend one pass use per upload |
@@ -71,7 +72,7 @@ must reject everyone except the gateway — otherwise anyone can bypass the pass
 2. Protect it with a Cloudflare Access application whose only policy allows a **service token**
    (non-identity decision, fallback blocked).
 3. Give the gateway the token: `wrangler secret put UPSTREAM_AUTH_HEADERS` →
-   `CF-Access-Client-Id: <id>, CF-Access-Client-Secret: <secret>`.
+   `[{"name":"CF-Access-Client-Id","value":"<id>"},{"name":"CF-Access-Client-Secret","value":"<secret>"}]` (a JSON array; invalid JSON makes the gateway fail closed).
 
 A Rust gateway running beside the relay can instead reach it on a private network address.
 

@@ -1,0 +1,9 @@
+# Generated at build time (gen:onchain) — canonical source lives in the Move package repos.
+docs/sui/onchain/
+docs/.vitepress/generated/
+# Build output + caches.
+dist/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+# Internal review next to the site source (srcExclude keeps it out of the site; package.json `files` negates it too).
+docs/audit/

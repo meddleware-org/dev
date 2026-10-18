@@ -6,20 +6,20 @@
 **Template:** AUDIT_TEMPLATE.md (2026-10-08) + AUDIT_TEMPLATE_TS.md (2026-10-08) + AUDIT_TEMPLATE_VUE.md (2026-10-08, hosting-header rows) + AUDIT_TEMPLATE_IMG.md (2026-10-08) + AUDIT_TEMPLATE_SITE.md (2026-09-30)
 **Package manager / lockfile:** npm 11, committed (also copied into the image for SBOM tools)   **Module format:** ESM (build scripts `.mjs`, VitePress config and theme TypeScript)   **Publish model:** image + npm package (ships `docs/`, `scripts/` and config; `NPM_PUBLISH` opt-in, enabled — `@meddleware/dev` 0.0.22 is on npm)
 **Runtime targets:** browser (static HTML); Node 24 for the build   **Peer dependencies:** none
-**Generator:** vitepress 2.0.0-alpha.20 (vue 3.5.43, TypeScript 6.0.3); no TypeDoc step (the API reference is on `docs.`)
-**Generated sources:** `scripts/gen-onchain.mjs` — the Move packages' `docs/onchain` pages from `@meddleware/access-gate-sui` 0.0.6, `seal-policies-sui` 0.0.7, `sui-token-template` 1.0.8 (lockfile; `ONCHAIN_DOCS_ROOT` is a local preview override only)
+**Generator:** vitepress 2.0.0-alpha.20 (vue 3.5.44, TypeScript 6.0.3); vitest 5.0.5 (unit tests); no TypeDoc step (the API reference is on `docs.`)
+**Generated sources:** `scripts/gen-onchain.mjs` — the Move packages' `docs/onchain` pages from `@meddleware/access-gate-sui` 0.0.6, `seal-policies-sui` 0.0.7, `sui-token-template` 1.0.9 (lockfile; `ONCHAIN_DOCS_ROOT` is a local preview override only)
 **Audience:** developers and operators (user-facing documentation is `docs.meddleware.co.uk`)
-**Unpublished material:** `drafts/` (retired DAO page, vault notes) sits outside `srcDir`, is not in the npm `files` list and is never linked; this audit lives in `docs/audit/` and is excluded from the site by `srcExclude: ['audit/**']` (live `/audit/dev-audit` answers 404) but not yet from the npm package (F9); white-label content is annotation-only (HTML comments, stripped by VitePress)
+**Unpublished material:** `drafts/` (retired DAO page, vault notes) sits outside `srcDir`, is not in the npm `files` list and is never linked; this audit lives in `docs/audit/` and is excluded from the site by `srcExclude: ['audit/**']` (live `/audit/dev-audit` answers 404); `package.json` `files` negates it, the generated pages and the cache for the npm package, and the build fails if an audit page reaches `dist/` (F9, 0.0.23); white-label content is annotation-only (HTML comments, stripped by VitePress)
 **Images:** `quay.io/meddleware-org/dev:0.0.22@sha256:dfad63d6…ee1c` (Docker Hub mirror; cosign keyless, SPDX SBOM attestation, build provenance; cosign-verified 2026-10-09, `verify-digests.sh` 16/16)
-**Base images:** build `node:24-slim@sha256:0e0ff40c…f9b6`; runtime `quay.io/meddleware-org/static-server:0.1.7@sha256:2e227311…2379` (Go 1.26.9)
+**Base images:** build `node:24-slim@sha256:0e0ff40c…f9b6`; runtime `quay.io/meddleware-org/static-server:0.1.8@sha256:e32cf42b…4000` in the 0.0.23 source (the deployed 0.0.22 image is on 0.1.7, `sha256:2e227311…2379`, Go 1.26.9)
 **Runtime user:** `USER 65534:65534`   **Runtime FS:** read-only root, no writable mounts
 **Deployed by:** `post-bootstrap/dev/overlays/default`; digest from `config/images.yaml`
 **Build args:** `CSP` only (the Content-Security-Policy string) — not secret, not a test switch; no `VITE_*`
 **Deployment status:** npm v0.0.22 and image `quay.io/meddleware-org/dev` 0.0.22 serving `dev.meddleware.co.uk` (`sha256:dfad63d6…`, deployed 2026-10-09; live `/sui/` carries the republished testnet ids `access_gate` `0xd7ddaa94…`, PlatformConfig `0x3f81489d…`, `seal_policies` `0x0c8f7349…`, PolicyConfig `0xee0403ba…`)
-**Review date:** 2026-10-03 (first pass) · re-verified 2026-10-09
+**Review date:** 2026-10-03 (first pass) · re-verified 2026-10-09 · fixes 2026-10-18 (0.0.23)
 **Reviewer:** Internal review
 **Severity ceiling:** Low — static content. Its code samples are copied into other people's apps, so a sample that teaches an unsafe pattern is the realistic harm.
-**Status:** re-verified 2026-10-09
+**Status:** re-verified 2026-10-09; 0.0.23 fixes applied 2026-10-18 (commit pending)
 
 ---
 
@@ -50,17 +50,18 @@ first pass:
   and the pod sets `automountServiceAccountToken: false`.
 
 The newly applicable lens checks, and re-reading the samples against the current packages, found defects
-that are **not yet fixed** (content and workflow changes are outside this alignment; each is a small
-edit for the next patch release): **F7 (Low, DEFERRED)** code samples out of step with the current client
-signatures (the access-proof, gated-upload and Seal samples), the realistic harm named in the severity
-ceiling; **F8 (Low, DEFERRED)** the gateway guide still describes the pre-v2 proof message and
-configuration; **F6 (Low, DEFERRED)** the testnet id table is typed by hand although `SECURITY.md` says it
-is generated; **F9 (Low, DEFERRED)** the npm package carries generated copies of other packages' pages
-and would carry the audit file; **F10 (Info, DEFERRED)** `node-ci.yml` has no `npm test` step (the site has
-no tests today, so nothing is skipped); **F12 (Info, DEFERRED)** the template range; **F17 (Info, DEFERRED)**
-contributor documents. Accepted or maintainer items: **F13** blanket `connect-src https:`, **F14** the
-cosign identity pins the repository not the workflow, **F16** the npm job's gate is a subset of CI
-(ACCEPTED-RISK); **F15** registry mirror and credential inventory (DEFERRED, maintainer).
+that were recorded DEFERRED on 2026-10-09. **All of them are RESOLVED in 0.0.23 (2026-10-18)**:
+**F6** `scripts/check-onchain-ids.mjs` fails the build when a page's id differs from the clients'
+`deployments`; **F7** the samples follow the current signatures (`buildAccessProof`, `createGatedAccess`,
+`createRelayAccessToken`, the Seal controller) and every fenced `ts` block is now type-checked against the
+installed packages in CI; **F8** the gateway guide describes protocol v2 and the required `GATEWAY_ORIGIN`,
+`NETWORK`, `NFT_TYPE`, `GATE_ID`; **F9** the npm package no longer carries the audit, the generated pages or
+the cache (62 files, now 36); **F10** `npm test` runs in CI and both release gates; **F12** the template
+range is `^1.0.9`; **F16** `npm-publish.yml` `verify` calls `node-ci.yml`; **F17** `CLAUDE.md` and
+`SECURITY.md` describe the pipeline. Accepted or maintainer items: **F13** blanket `connect-src https:` and
+**F14** the cosign identity pins the repository not the workflow (ACCEPTED-RISK; no single safe fix without a
+browser probe or a workspace-script change); **F15** registry mirror and credential inventory (DEFERRED,
+maintainer).
 
 The severity ceiling stays Low.
 
@@ -68,13 +69,13 @@ The severity ceiling stays Low.
 
 | Actor | Holds / proves | Can do | Bounded by |
 | --- | --- | --- | --- |
-| Developer reader | nothing | copy samples into their app | samples use the hardened client APIs (F1); imports checked against exports |
+| Developer reader | nothing | copy samples into their app | samples use the hardened client APIs (F1) and compile against the installed packages (F7) |
 | Content author | PR access | change guides | review; build dead-link check; CSP hash check |
 | Build inputs | installed Move packages | shape on-chain pages | lockfile-pinned; read from `node_modules` only |
 | Publish path | registry tokens; npm OIDC | push an altered image or package | tag-gated CI; Trivy then cosign; SBOM and provenance attestations |
 | Base-image publisher, registry | image layers, the manifest served for a tag | ship altered bytes | digest pinning (build and runtime base, deployment by digest); signature verified by `verify-digests.sh` |
-| Upstream packages the generator reads | on-chain pages, ids shown to developers | change what readers see | lockfile-pinned versions (F5); generated output git-ignored; the id table typed by hand is the gap (F6) |
-| Client packages the samples describe | the call shapes developers copy | leave samples behind the API | import-name check by hand; argument drift is F7 |
+| Upstream packages the generator reads | on-chain pages, ids shown to developers | change what readers see | lockfile-pinned versions (F5); generated output git-ignored; the ids typed into the testnet table and the Seal sample are checked against the clients' `deployments` at build time (F6) |
+| Client packages the samples describe | the call shapes developers copy | leave samples behind the API | every fenced `ts` sample is type-checked against the installed packages in CI (F7) |
 | External link targets | content behind every outbound link | send readers elsewhere | weekly blocking lychee run (F3) |
 | Build environment | which drafts or local overrides reach the output | ship a draft or a preview-root build | `drafts/` outside `srcDir`; `srcExclude`; `ONCHAIN_DOCS_ROOT` unset in CI and the image; `.dockerignore` excludes local env files |
 
@@ -84,19 +85,21 @@ Critical / High / Medium / Low / Info / Positive.
 
 ## Scope
 
-- **In scope (0.0.22):** `docs/**` (guides, design system, getting started, Sui sections),
-  `docs/.vitepress/**`, `scripts/{gen-onchain,check-csp-inline,third-party-licenses}.mjs`, `Dockerfile`,
+- **In scope (0.0.23):** `docs/**` (guides, design system, getting started, Sui sections),
+  `docs/.vitepress/**`, `scripts/{gen-onchain,check-onchain-ids,check-dist-no-audit,check-csp-inline,third-party-licenses}.mjs`, `tests/**`, `Dockerfile`,
   `.dockerignore`, workflows, `.github/{audit-gate.mjs,audit-allowlist.json,dependabot.yml}`, `SECURITY.md`,
   `CLAUDE.md`, `post-bootstrap/dev/` (read-only).
 - **Out of scope:** the packages documented (own audits); `drafts/` (not built, not published).
-- **Environment (2026-10-09):** `tsc --noEmit` (clean); `check-csp-inline.mjs` against the 0.0.22 `dist`
-  (29 HTML files, all inline scripts covered); audit gate (1 allowlisted advisory, 0 open); sample
-  imports re-checked by script against the installed `@meddleware/*` packages (0 unknown names; argument
-  shapes read by hand, F7); `npm pack --dry-run` (62 files) and the published 0.0.22 tarball (44 files)
-  listed; live headers, `/THIRD_PARTY_LICENSES`, deep links, the 404 page and the testnet ids of
-  `dev.meddleware.co.uk` (HTTP reads 2026-10-10). The site has no test suite (`package.json` has no
-  `test` script). Earlier (2026-10-03): stylelint, eslint, html-validate green; lychee over external
-  links, 0 errors.
+- **Environment (2026-10-18, 0.0.23):** `tsc --noEmit` (clean); `npm test` (vitest 5.0.5: 18 tests in 3
+  files); stylelint, eslint and html-validate (clean); `npm run build` including `check-onchain-ids.mjs`
+  and `check-dist-no-audit.mjs`; `check-csp-inline.mjs` against the 0.0.23 `dist` (29 HTML files, all inline
+  scripts covered); `check:licenses` (27 production packages); audit gate (1 allowlisted advisory, 0 open);
+  `npm pack --dry-run` (36 files; 62 before); installed `access-gate-client` 0.0.9, `seal-client` 0.0.20,
+  `walrus-client` 0.0.28, `nft-gate-client` 0.0.17, `wallet-adapter` 0.0.17, `@mysten/sui` 2.36.0; protocol
+  text read against `nft-gate` 0.0.22 (`gateway-workers`, `gateway-rust`) and `nft-gate-client` 0.0.17.
+  Live probes of 2026-10-09/10 (headers, `/THIRD_PARTY_LICENSES`, deep links, the 404 page, the testnet ids of
+  `dev.meddleware.co.uk`) were not repeated. Earlier (2026-10-09): `npm pack --dry-run` (62 files) and the
+  published 0.0.22 tarball (44 files) listed.
 
 ## Findings
 
@@ -145,11 +148,11 @@ no secret, internal host or key text); signed, attested, digest-pinned image.
 **Severity:** Positive — the Move packages own their developer pages; `gen:onchain` copies the pages
 their manifests assign to this site from the installed (lockfile-pinned) packages. Re-checked
 2026-10-09: the generator reads `node_modules` only; the id table in `docs/sui/index.md` is not part of
-the generated pages (F6).
+the generated pages (its ids are checked at build time, F6).
 
 ### F6 — Testnet ids in the guides are typed by hand
 
-**Severity:** Low   **Disposition:** DEFERRED (next patch release; a build-time drift check, below)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `scripts/check-onchain-ids.mjs`, `tests/check-onchain-ids.test.mjs`; commit pending)
 **Where:** `docs/sui/index.md:40-41` (the "Testnet deployments" table); `docs/sui/sealed-storage/index.md:52-55`
 (Seal key-server object ids)
 **Issue:** the `access_gate` and `seal_policies` package ids and the `PlatformConfig` and `PolicyConfig`
@@ -162,14 +165,24 @@ values are correct today: they match `Published.toml` of `@meddleware/access-gat
 drift: 0.0.20 shipped without its id edits and 0.0.21 had to follow (CHANGELOG 0.0.21).
 **Impact:** after the next republication the table would show the previous package; a developer copying
 an id would call a superseded package. `SECURITY.md` overstates what the build guarantees.
-**Remediation / evidence:** a `scripts/check-onchain-ids.mjs` step in `build` that compares the table with
-`ACCESS_GATE_DEPLOYMENTS` and `SEAL_POLICIES_DEPLOYMENTS` (add the two clients as devDependencies), or
-generate the table from them; until then reword `SECURITY.md` invariant 1 to say that the imported
-pages are generated and the table is checked by hand.
+**Remediation / evidence:** 0.0.23 adds `scripts/check-onchain-ids.mjs`, run by `npm run build` before
+VitePress, with `access-gate-client` and `seal-client` as dev dependencies. It loads `ACCESS_GATE_DEPLOYMENTS`
+and `SEAL_POLICIES_DEPLOYMENTS` from the installed clients (`…/deployments`; the clients ship TypeScript
+source, which the check transpiles with `typescript`) and fails the build when any hand-written page
+(everything under `docs/` except `audit/` and the generated `sui/onchain/` tree) carries a 32-byte `0x…` id
+that is neither a current testnet id of either deployment nor one of the three Seal key-server object ids
+allowlisted in the script (`OTHER_IDS`, the `seal-ui` defaults), or when `docs/sui/index.md` lacks one of the
+four ids it must show (`access_gate` original id and `PlatformConfig`, `seal_policies` original id and
+`PolicyConfig`). It fails closed when a client or its record cannot be read. Pinned by
+`tests/check-onchain-ids.test.mjs` (superseded id, missing id, mixed case, ignored trees, key-server
+allowlist, short literals, missing page) and by a test that runs the check on this repository's real pages
+with the installed clients. The table stays typed (it carries prose); drift can no longer ship.
+`SECURITY.md` invariant 1 now says exactly that. Verified with the 0.0.23 lockfile (access-gate-client 0.0.9,
+seal-client 0.0.20): the page matches.
 
 ### F7 — Code samples no longer match the current client signatures
 
-**Severity:** Low   **Disposition:** DEFERRED (next patch release; edit the samples and add a type-check, below)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `tests/samples.test.mjs`, `tests/samples-context.d.ts`; commit pending)
 **Where:** `docs/sui/access-gate/integration.md:29-56` (`buildAccessProof`);
 `docs/sui/walrus-storage/integration.md:18-35` (`createGatedAccess`) and `:57` (`createRelayAccessToken`);
 `docs/sui/sealed-storage/index.md:36-58` and `integration.md:6-25` (`SealController`, `encrypt`)
@@ -189,15 +202,30 @@ pages are generated and the table is checked by hand.
   at import (seal-client 0.0.17; optional, but the safer form).
 **Impact:** the realistic harm named in the severity ceiling: a developer copies a sample that does not
 run, or that seals content to a gate whose passes can be made public. No user funds are involved.
-**Remediation / evidence:** pass the three extra fields in the access and Walrus samples; set
-`accessGateOriginalId` in the Seal sample and add one sentence and a warning on soulbound-only sealing;
-pass `registry` to `parseSealedManifest`. To stop recurrence, extract the fenced `ts` blocks and
-type-check them against the installed packages in CI (the earlier import-name check was manual and could
-not see argument drift).
+**Remediation / evidence:** 0.0.23 edits the samples: `buildAccessProof` passes `gateway`, `gateId` and
+`network` (both the single-gate and the single-use sample, which now also imports what it uses);
+`createGatedAccess<Transaction>` passes `gateId` and `network`; a new `createRelayAccessToken` sample shows
+`gateId`, `network` and `sign`; the Seal sample sets `accessGateOriginalId` (from
+`accessGateDeployment('testnet').originalId`, also given to `createDefaultRegistry`), carries a warning
+that `encrypt('nft-gate', …)` refuses a gate that mints transferable passes (`allowTransferableGates` opts
+in) and that without `accessGateOriginalId` the gate is not read, and the integration guide repeats it next
+to the encrypt step; `parseSealedManifest(untrustedJson, registry)` passes the registry. The type-check
+found four further defects that the import-name check could not see, now fixed: the lifetime and
+attribute samples did not `await` `extendBlobLifetimeTransaction` / `setBlobAttributesTransaction` (they
+return promises), the single-use sample used `fetchChallenge` and `buildAccessProof` without importing
+them, and the wallet-adapter sample used the `Transaction` type without importing it. **Recurrence:** `tests/samples.test.mjs` extracts every fenced `ts` block under `docs/` (not
+`audit/`, not the generated pages), wraps it as a module (imports at the top level, the rest in an async
+function, line numbers preserved) and compiles it with the TypeScript API against the installed
+`@meddleware/*` and `@mysten/*` packages in strict mode, reporting `file:line`. The names the prose assumes
+(`exec` is the executor `buildExecutor()` returns, `gate` an `AccessGateConfig`, `client`, `walrus`, `seal`,
+…) are typed from the real packages in `tests/samples-context.d.ts`. A block that cannot be checked needs a
+`<!-- sample: skip — reason -->` line (none today; the test caps them at six). The test is pinned by a
+self-test that a wrong call is reported at the right Markdown line. It runs in CI and in both release gates
+(F10, F16).
 
 ### F8 — The gateway guide describes the pre-v2 protocol and configuration
 
-**Severity:** Low   **Disposition:** DEFERRED (next patch release; edit `gateway.md`, `index.md`)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `gateway.md`, `index.md`, `relay-self-host.md`; commit pending)
 **Where:** `docs/sui/access-gate/gateway.md:28-31` and `:36-50`, `docs/sui/access-gate/index.md:35`
 **Issue:** the pages say the wallet signs `nft-gate:access:<nonce>` and list `GATE_ID` as optional. Since
 nft-gate 0.0.19 / nft-gate-client 0.0.16 the signed message is `nft-gate:access:v2`, multi-line, binding
@@ -207,13 +235,23 @@ requires `GATE_ID`, `GATEWAY_ORIGIN` (a canonical https origin) and `NETWORK` (`
 for the Rust gateway has the same gaps; that gateway is kept at parity but is not deployed.
 **Impact:** an operator following the guide deploys a gateway that refuses to start, or a client builds a
 v1 message that every v2 gateway rejects. Both fail closed.
-**Remediation / evidence:** describe the v2 message by pointing at nft-gate-client's README (the message
-and `vectors.json` are defined there), add the three required variables, and list the `409` codes
-(`GATEWAY_CONFLICT_CODES` in nft-gate-client).
+**Remediation / evidence:** `gateway.md` now states the `nft-gate:access:v2` message (origin, gate, network,
+nonce, consume digest) with a pointer to nft-gate-client's wire-protocol section and `vectors.json`, lists
+`GATEWAY_ORIGIN`, `NETWORK`, `NFT_TYPE` and `GATE_ID` as required (and `UPSTREAM_AUTH_HEADERS` as a JSON
+array, `ALLOWED_ORIGINS`), puts the three public values in the Workers `[vars]` step (no longer secrets),
+adds `GATEWAY_ORIGIN`, `NETWORK`, `GATE_ID` and `ALLOW_INSECURE_HTTP` (and the `REDIS_URL` requirement with
+`SINGLE_USE`) to the Docker snippet, lists the `409` codes (`redeemed`, `leased`) and links the two
+implementations' complete configuration tables; `access-gate/index.md` names the v2 message in the concepts
+table; `relay-self-host.md` adds the same settings and the JSON header format; `integration.md` explains why
+`buildAccessProof` needs the gateway, gate and network. Read against `nft-gate` 0.0.22 `gateway-workers`
+(`wrangler.toml`, `src/config.ts`, README) and `gateway-rust` README, and `nft-gate-client` 0.0.17.
+The table is version-stamped in the page ("checked against nft-gate 0.0.22") and sends readers to the
+READMEs for the complete reference, which closes the pre-mainnet "API/flag/env pages version-stamped"
+gate; the samples that build the proof are type-checked (F7).
 
 ### F9 — The npm package carries generated and internal files
 
-**Severity:** Low   **Disposition:** DEFERRED (next patch release; add an `.npmignore`)
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `package.json` `files`, `scripts/check-dist-no-audit.mjs`, `tests/package-contents.test.mjs`; commit pending)
 **Where:** `package.json` `files` (`"docs"`); there is no `.npmignore`
 **Issue:** `files` whitelists all of `docs/`, and the repository has no `.npmignore`, so
 `docs/sui/onchain/` and `docs/.vitepress/generated/` (copies of the Move packages' pages, produced by
@@ -225,13 +263,19 @@ committed). The site is unaffected: `srcExclude: ['audit/**']` and the live `/au
 **Impact:** duplicates of other packages' documentation under this package's name (stale after the source
 package moves on), and an internal review in a public package (SITE-M4, SITE *Drafts & unpublished
 material*, *Generated-content integrity*: generated output must stay out of published artefacts).
-**Remediation / evidence:** add `.npmignore` with `docs/audit/`, `docs/sui/onchain/` and
-`docs/.vitepress/generated/` (the docs repo's `.npmignore` already excludes its generated subtrees), and
-extend `check-csp-inline.mjs`'s walk over `dist/` to fail on an `audit` page.
+**Remediation / evidence:** a root `.npmignore` does not filter a `files` allowlist, so the fix is negations in
+`package.json` `files`: `!docs/audit`, `!docs/sui/onchain`, `!docs/.vitepress/generated` (and `/cache`,
+`/dist`), with the globs for their contents; `.npmignore` names the same trees. `npm pack --dry-run`
+(2026-10-18): 36 files, none under `docs/audit`, `docs/sui/onchain`, `docs/.vitepress/generated`,
+`docs/.vitepress/cache` or `drafts/` (62 before; the dry run also exposed 17 VitePress cache files that
+the 0.0.22 audit had not listed). `tests/package-contents.test.mjs` runs `npm pack --dry-run --json` and
+fails on any of these, and checks that `docs/index.md` and the scripts are present. The build now ends
+with `scripts/check-dist-no-audit.mjs`, which fails if `dist/` holds a path named `audit` (or `*-audit.*`);
+unit-tested on a temporary tree.
 
 ### F10 — The CI workflow has no `npm test` step
 
-**Severity:** Info   **Disposition:** DEFERRED (one line in `node-ci.yml`, when the site gains a test)
+**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `npm test` in `node-ci.yml`; commit pending)
 **Where:** `.github/workflows/node-ci.yml`; `docker-publish.yml` `verify` calls it; `npm-publish.yml` `verify`
 **Issue:** `node-ci.yml` runs the audit gate, type-check, the three linters, the build and the licence
 check, but no `npm test`; the image release's `verify` job is a call to it (0.0.22, `22e82bb`), so unit
@@ -240,8 +284,12 @@ tests, build, licences") overstates it. The npm job's `verify` runs `npm run tes
 **Impact:** none today: `package.json` defines no `test` script and the repository has no test files, so
 no test is skipped. The first test added (for example the sample type-check of F7) would not run in CI or
 in the release gate (TS lens: every test project that exists runs in CI).
-**Remediation / evidence:** add `- run: npm test --if-present` to `node-ci.yml` and correct the comment.
-Verified by reading all three workflows and `package.json` 2026-10-09.
+**Remediation / evidence:** the site gained a test suite (vitest 5.0.5; `npm test` = `vitest run`; 18 tests
+in `tests/`: the on-chain id check F6, the sample type-check F7, the package contents and dist check F9).
+`node-ci.yml` runs `npm test` (no `--if-present`: the script exists), `docker-publish.yml` `verify` and
+(F16) `npm-publish.yml` `verify` call `node-ci.yml`, so both release paths run the tests. The comment in
+`docker-publish.yml` names the checks accurately. Verified by reading all three workflows and `package.json`
+2026-10-18.
 
 ### F11 — Image release gate, scan, notices and runtime user
 
@@ -266,14 +314,17 @@ scan runs at release).
 
 ### F12 — The template dependency range does not name the resolved version
 
-**Severity:** Info   **Disposition:** DEFERRED (next patch release; bump and re-lock)
+**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `package.json`; commit pending)
 **Where:** `package.json` (`@meddleware/sui-token-template ^1.0.7`)
 **Issue:** the range resolves to 1.0.8 (the latest published; lockfile and `npm ls` 2026-10-09), which the
 on-chain pages need (supply and metadata policies applied in the coin's `init`), but the manifest does not
 say so. Every other first-party range is at its latest published version (access-gate-sui `^0.0.6`,
 seal-policies-sui `^0.0.7`, ui `^0.1.31`, design-tokens `^0.1.9`).
 **Impact:** a lockfile regeneration could resolve either version; documentation accuracy only.
-**Remediation / evidence:** set `^1.0.8` and regenerate the lockfile.
+**Remediation / evidence:** `@meddleware/sui-token-template` is `^1.0.9` (the latest published, 2026-10-18)
+and the lockfile resolves 1.0.9, so the range names the version the on-chain pages were generated from. The
+other first-party ranges are at their latest (`design-tokens ^0.1.10`, `ui ^0.1.31`, `access-gate-sui ^0.0.6`,
+`seal-policies-sui ^0.0.7`, clients as listed in B.1).
 
 ### F13 — `connect-src` allows any https origin
 
@@ -286,7 +337,8 @@ and relay hosts, which this static site does not have.
 and `script-src 'self'` with two hashes and a nonce, no off-origin script (F4) and no `v-html`/`eval` in
 the theme is the control on that; the site holds no secret or session.
 **Remediation / evidence:** accepted for now (same decision as docs F19); tightening `connect-src` to
-`'self'` needs a browser probe of the local search first (not done).
+`'self'` needs a browser probe of the local search first (not done; 2026-10-18: left as is, no single safe
+fix without that probe).
 
 ### F14 — The cosign identity pins the repository, not the workflow
 
@@ -296,7 +348,7 @@ the theme is the control on that; the site holds no secret or session.
 **Impact:** a workflow added by someone with write access could sign an image the check would accept.
 **Remediation / evidence:** the repository is the signing boundary; anchoring to
 `docker-publish.yml@refs/tags/v*` is a `COSIGN_IDENTITY_REGEXP` override in the workspace script. The
-deployed digest verified 2026-10-09 (16/16).
+deployed digest verified 2026-10-09 (16/16). 2026-10-18: left as is (workspace-script change).
 
 ### F15 — Self-hosted registry mirror and registry credentials
 
@@ -311,62 +363,68 @@ verifies signatures, so it would not run).
 
 ### F16 — The npm publish gate is a subset of CI
 
-**Severity:** Low   **Disposition:** ACCEPTED-RISK
+**Severity:** Low   **Disposition:** RESOLVED (0.0.23; `npm-publish.yml` `verify` calls `node-ci.yml`; commit pending)
 **Where:** `.github/workflows/npm-publish.yml`
 **Issue:** the npm job's `verify` runs `npm ci`, the audit gate, type-check and `npm run test
 --if-present`, not the full CI workflow (linters, build, licence check). The image release (F11) does run
 the full workflow on the same tag.
 **Impact:** a tag could publish the source package while the image job refuses the same commit. The
 package is source (`docs/`, `scripts/`), not the built site.
-**Remediation / evidence:** accepted: OIDC-published with provenance, tag == version checked, idempotent,
-opt-in through `NPM_PUBLISH` (enabled; `@meddleware/dev` 0.0.22 is on npm). Calling `node-ci.yml` from
-`npm-publish.yml` would close it; not required for safety.
+**Remediation / evidence:** was accepted on 2026-10-09 (OIDC-published with provenance, tag == version checked,
+idempotent, opt-in through `NPM_PUBLISH`); the single clear fix is now made: `verify` is
+`uses: ./.github/workflows/node-ci.yml`, as in the image release, so the npm job runs the audit gate,
+type-check, unit tests, linters, build with the id check, and the licence check on the tagged commit.
 
 ### F17 — Contributor documents disagree with the pipeline
 
-**Severity:** Info   **Disposition:** DEFERRED (next patch release; documentation)
+**Severity:** Info   **Disposition:** RESOLVED (0.0.23; `CLAUDE.md`, `SECURITY.md`; commit pending)
 **Where:** `CLAUDE.md` ("`npm run build` is the only required CI step"); `SECURITY.md` invariant 1 (F6)
 **Issue:** CI also runs the audit gate, type-check, three linters and the licence check, and the image
 build runs the CSP check; `SECURITY.md` says ids are never hand-typed (F6). `CLAUDE.md` and the audit
 agree on the white-label and drafts rules, which hold (`drafts/` is outside `srcDir`, absent from `files`
 and from the site).
 **Impact:** documentation only.
-**Remediation / evidence:** reword both after F6 is fixed.
+**Remediation / evidence:** `CLAUDE.md` replaces "`npm run build` is the only required CI step" with the real
+check list (audit gate, type-check, `npm test`, three linters, build, licence check, the image's CSP check),
+the on-chain id check and how to update after a republication, the sample type-check and its context file and
+skip marker, and the packaging rules; `SECURITY.md` invariant 1 says that the generated pages come from the
+packages and the typed ids are checked at build time (F6), and a new invariant 4 covers the sample
+type-check and the audit never reaching `dist/` or the package.
 
 ## Section A — Invariant verification matrix
 
 | # | Invariant | Enforced at | Proven by | Status |
 | --- | --- | --- | --- | --- |
 | I1 | Static content only | source | build | HOLDS |
-| I2 | Samples import only real exports and use the hardened APIs | content | export check; review | HOLDS (F1) |
+| I2 | Samples import only real exports and use the hardened APIs | content; type-check | `tests/samples.test.mjs`; review | HOLDS (F1, F7) |
 | I3 | Every inline script allowed by the CSP hashes | `check-csp-inline.mjs` | build | HOLDS (F4) |
 | I4 | Internal links resolve; external links checked | VitePress; lychee | CI | HOLDS (F3) |
 | I5 | Each URL serves its own page; unknown URLs 404 | static-server options | docs image probe (same configuration) | HOLDS (F2) |
 | I6 | Generated pages from pinned inputs | `gen-onchain.mjs` | lockfile | HOLDS (F5) |
-| I7 | On-chain ids shown to readers equal the recorded deployment | typed literals in `docs/sui/index.md` and `sealed-storage/index.md` | manual comparison 2026-10-09 against `Published.toml`, client `deployments`, `seal-ui` config and the live page; no automated check | HOLDS (code-only) — F6 |
-| I8 | Samples call the current client signatures | content | names checked by script; arguments by hand | GAP — see F7 |
-| I9 | The gateway guide matches the deployed protocol and configuration | content | read against nft-gate-client 0.0.16 and gateway-workers 0.0.21 | GAP — see F8 |
-| I10 | Drafts and the audit file are absent from every published artefact | `drafts/` outside `srcDir`, `srcExclude` (site); nothing for the npm package | live `/audit/dev-audit` 404; `npm pack` lists the audit and generated pages | GAP — see F9 |
-| I11 | The unit tests run on every change and every release | none (`node-ci.yml` has no test step) | none; the site has no tests | GAP (nothing to run today) — see F10 |
+| I7 | On-chain ids shown to readers equal the recorded deployment | `scripts/check-onchain-ids.mjs` in `build` (typed ids in `docs/sui/index.md`, the Seal key-server ids allowlisted) | `tests/check-onchain-ids.test.mjs`, the real pages checked against the installed clients' `deployments` in the build and the tests | HOLDS (F6) |
+| I8 | Samples call the current client signatures | `tests/samples.test.mjs` (every fenced `ts` block compiled against the installed packages) | CI and both release gates | HOLDS (F7) |
+| I9 | The gateway guide matches the deployed protocol and configuration | content, version-stamped table | read against nft-gate-client 0.0.17 and nft-gate 0.0.22 (`gateway-workers`, `gateway-rust`) on 2026-10-18; the proof-building samples are type-checked | HOLDS (F8) |
+| I10 | Drafts and the audit file are absent from every published artefact | `drafts/` outside `srcDir`, `srcExclude` (site); `files` negations (npm); `check-dist-no-audit.mjs` (build output) | `tests/package-contents.test.mjs` (`npm pack --dry-run`: 36 files); live `/audit/dev-audit` 404 (2026-10-10) | HOLDS (F9) |
+| I11 | The unit tests run on every change and every release | `node-ci.yml` `npm test`; both release workflows call `node-ci.yml` | workflows read 2026-10-18 | HOLDS (F10, F16) |
 | I12 | The release ships only what full CI accepted, scanned and signed | `docker-publish.yml` `verify` → `node-ci.yml`; Trivy before cosign | workflow read 2026-10-09 | HOLDS (F11) |
 
 ### Lens categories
 
 | Lens | Category | Status |
 | --- | --- | --- |
-| SITE | Generated-content integrity | HOLDS (I6) — the generator reads lockfile-pinned installed packages; output (`docs/sui/onchain/`, `.vitepress/generated/`) is git-ignored and `.dockerignore`d; `ONCHAIN_DOCS_ROOT` is a local preview override only. The generator fails soft (placeholder pages) |
-| SITE | On-chain facts | GAP — typed literals (I7, F6); the generated on-chain pages come from the packages |
-| SITE | Drafts & unpublished material | site HOLDS (`drafts/` outside `srcDir`, `srcExclude`, live 404); npm package GAP (I10, F9); no build-output check |
+| SITE | Generated-content integrity | HOLDS (I6) — the generator reads lockfile-pinned installed packages; output (`docs/sui/onchain/`, `.vitepress/generated/`) is git-ignored, `.dockerignore`d and negated in the npm `files`; `ONCHAIN_DOCS_ROOT` is a local preview override only. The generator fails soft (placeholder pages) |
+| SITE | On-chain facts | HOLDS (I7) — the on-chain pages come from the packages; the typed ids are checked at build time against the clients' `deployments` (F6) |
+| SITE | Drafts & unpublished material | HOLDS (I10) — `drafts/` outside `srcDir`, `srcExclude`, live 404, `files` negations, `check-dist-no-audit.mjs` (F9) |
 | SITE | No sensitive content | HOLDS — no secret, internal host or private-key text in the tracked Markdown; audience separation stated (developers here, end users on `docs.`); white-label content is annotation-only |
 | SITE | Links | HOLDS (I4) — VitePress fails on internal dead links; weekly blocking lychee run, npmjs.com excluded |
 | SITE | Inline scripts | HOLDS (I3) — two hashes in the `CSP` argument, `check-csp-inline.mjs` in the image build; the live header adds only static-server's nonce |
-| SITE | Accuracy against code | GAP — imported pages are generated; hand-written samples have drifted from the client signatures (I8, F7) and the gateway guide from protocol v2 (I9, F8) |
+| SITE | Accuracy against code | HOLDS (I8, I9) — imported pages are generated; the samples are type-checked against the installed clients (F7) and the gateway guide matches protocol v2 (F8) |
 | SITE | Serving semantics | HOLDS (I5) |
 | VUE | Hosting headers | HOLDS — live (2026-10-10): CSP (`default-src 'self'`, `script-src 'self'` + two hashes + nonce, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`, `upgrade-insecure-requests`), HSTS 1 year, nosniff, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: SAMEORIGIN`; blanket `connect-src https:` is F13 |
-| TS | Compiler strictness, assertions, validation, money, network I/O, encoding, dynamic code | HOLDS — `strict: true` over the VitePress config and theme (`tsc --noEmit` in CI); the script is `.mjs` and reads `node_modules` only; no `v-html`, `eval` or `fetch` in the theme; the guides' samples are Markdown, not compiled (F7) |
-| TS | Supply chain | HOLDS — `npm ci`, audit gate in CI and the npm job (1 allowlisted, 0 open), `npm@11.20.0` pinned in publish; packaging F9; first-party range F12 |
-| TS | Test projects in CI | N/A today — the site has no tests; the CI workflow has no test step (F10) |
-| IMG | Base images, build context, reproducible build, no secrets, runtime user, scan, SBOM and notices | HOLDS (F11) — digest-pinned `node:24-slim` and static-server 0.1.7; `.dockerignore` excludes `node_modules`, `dist`, caches, generated output, `.git`, `.github` and `.env*.local`; `npm ci`; the only `ARG` is the public `CSP`; Trivy before cosign; lockfile in the image; `/THIRD_PARTY_LICENSES` served |
+| TS | Compiler strictness, assertions, validation, money, network I/O, encoding, dynamic code | HOLDS — `strict: true` over the VitePress config and theme (`tsc --noEmit` in CI); the build scripts are `.mjs` and read `node_modules` only; no `v-html`, `eval` or `fetch` in the theme; the guides' samples are compiled in strict mode by `tests/samples.test.mjs` (F7) |
+| TS | Supply chain | HOLDS — `npm ci`, audit gate in CI and the npm job (1 allowlisted, 0 open), `npm@11.20.0` pinned in publish; packaging F9 fixed; first-party ranges at their latest (F12) |
+| TS | Test projects in CI | HOLDS (I11) — one vitest project (`tests/`), run by `node-ci.yml` and so by both release gates (F10) |
+| IMG | Base images, build context, reproducible build, no secrets, runtime user, scan, SBOM and notices | HOLDS (F11) — digest-pinned `node:24-slim` and static-server 0.1.8 (0.0.23 source); `.dockerignore` excludes `node_modules`, `dist`, caches, generated output, `.git`, `.github` and `.env*.local`; `npm ci`; the only `ARG` is the public `CSP`; Trivy before cosign; lockfile in the image; `/THIRD_PARTY_LICENSES` served |
 | IMG | Verification command | GAP accepted — the identity pins the repository (F14) |
 | IMG | Deployment pinning | HOLDS — digest in `config/images.yaml` and the overlay; the base manifest's tag (`0.0.1`) is overridden by the overlay digest and is cosmetic |
 
@@ -377,17 +435,19 @@ and from the site).
 | Dependency | Pinned version | Liveness dependency? | CVE / audit status | Notes |
 | --- | --- | --- | --- | --- |
 | `vitepress` | 2.0.0-alpha.20 (lockfile) | build only | clean | pre-release; the CSP check fails the build when its inline scripts change |
-| `@meddleware/access-gate-sui`, `seal-policies-sui`, `sui-token-template` | `^0.0.6`, `^0.0.7` (latest), `^1.0.7` (resolves 1.0.8, the latest) | build only | clean | on-chain pages; F12 |
-| `@meddleware/ui`, `design-tokens` | `^0.1.31`, `^0.1.9` (latest) | theme | clean | |
-| `@mysten/*` | none (the samples use them; they are not installed here) | — | — | ADR-0001 baseline `@mysten/sui ^2.33.1` is what the samples assume |
+| `vitest` | `~5.0.5` | tests only | clean | dev |
+| `@meddleware/access-gate-sui`, `seal-policies-sui`, `sui-token-template` | `^0.0.6`, `^0.0.7`, `^1.0.9` (all latest, 2026-10-18) | build only | clean | on-chain pages; F12 |
+| `@meddleware/ui`, `design-tokens` | `^0.1.31`, `^0.1.10` (latest) | theme | clean | |
+| `@meddleware/*` clients, `@mysten/*` | access-gate-client `^0.0.9`, seal-client `^0.0.20`, nft-gate-client `^0.0.17`, walrus-client `^0.0.28`, wallet-adapter `^0.0.17`; `@mysten/sui ^2.36.0`, `seal ^1.5.0`, `walrus ~1.2.35` (all dev dependencies) | tests and the id check only | clean | not shipped in the site; they are what the samples are compiled against (F6, F7) |
 | Link checker | lychee-action pinned by SHA | none | — | CI only |
-| `node:24-slim` / `static-server` | digest-pinned / 0.1.7 | build / runtime | Trivy at release (F11); Go 1.26.9 | — |
+| `node:24-slim` / `static-server` | digest-pinned / 0.1.8 (0.0.23; the deployed 0.0.22 is on 0.1.7) | build / runtime | Trivy at release (F11); Go 1.26.9 (0.1.7) | — |
 | dev tooling | lockfile | no | GHSA-vfj7-8cjw-p6xm allowlisted to 2027-01-01 | TS lens B.TS-3 |
 
 Install-time code (TS B.TS-2): the lockfile has one lifecycle script, `fsevents` (dev, optional, macOS
-only); no `allowScripts`, no `overrides`, no `prepare`/`postinstall`. `files`: `docs`, `tsconfig.json`,
-`CHANGELOG.md`, `scripts` (`npm pack --dry-run` 2026-10-09: 62 files, 2.3 MB; no tests, fixtures or
-`.env*`; generated pages and the audit file, F9). Node range `^22.18.0 || >=24.12.0`; CI and the image use 24.
+only); no `allowScripts`, no `overrides`, no `prepare`/`postinstall`. `files`: `docs` (with negations for
+`docs/audit`, `docs/sui/onchain`, `docs/.vitepress/{generated,cache,dist}`), `tsconfig.json`, `CHANGELOG.md`,
+`scripts` (`npm pack --dry-run` 2026-10-18: 36 files; no tests, fixtures, `.env*`, audit file or generated
+pages, F9). Node range `^22.18.0 || >=24.12.0`; CI and the image use 24.
 
 ### B.2 Publish authority, capabilities & secret custody
 
@@ -401,8 +461,8 @@ CI & release integrity: actions pinned by SHA (workflows read 2026-10-09); expli
 workflow and job (`id-token`/`attestations` only on the signing job, `id-token` only on the npm publish
 job); OIDC publish with a tag == version check and an idempotent registry check; npm client pinned
 (`npm@11.20.0`); image release = full CI via `workflow_call` + Trivy + cosign + SPDX SBOM attestation +
-provenance, no `continue-on-error` on the public path (F11; the CI workflow has no test step, F10; the npm
-gate is a subset, F16); `npm ci` everywhere; audit gate in CI and the npm job; Dependabot weekly and
+provenance, no `continue-on-error` on the public path (F11); both release workflows call the full CI workflow,
+unit tests included (F10, F16); `npm ci` everywhere; audit gate in CI (and so in both releases); Dependabot weekly and
 grouped for npm, Docker and Actions (`.github/dependabot.yml`); no test-only build mode exists; no job
 spends real funds.
 
@@ -421,7 +481,7 @@ inline-script rule is enforced at build time by `check-csp-inline.mjs` (SITE and
 
 ### B.VUE-2 / B.IMG Build inputs and artifacts
 
-`node:24-slim@sha256:0e0ff40c…` builder and `static-server:0.1.7@sha256:2e227311…` runtime, both
+`node:24-slim@sha256:0e0ff40c…` builder and `static-server:0.1.8@sha256:e32cf42b…` runtime (0.0.23 source; the deployed image is on 0.1.7), both
 digest-pinned (Dependabot Docker group); `npm ci`; `.dockerignore` excludes local installs, build output,
 VCS data and every `.env*.local`; `npm run build && npm run licenses` run in the build stage; the runtime
 stage copies `dist` and the lockfile only; `USER 65534:65534`; the only `ARG` is the public `CSP`;
@@ -436,10 +496,11 @@ VitePress emits no source maps for the production build; the deployment is read-
 | Input | Version / pin | Used for |
 | --- | --- | --- |
 | vitepress | 2.0.0-alpha.20 (lockfile) | site build |
-| access-gate-sui, seal-policies-sui, sui-token-template | 0.0.6, 0.0.7, 1.0.8 (lockfile) | `gen-onchain.mjs` |
+| access-gate-sui, seal-policies-sui, sui-token-template | 0.0.6, 0.0.7, 1.0.9 (lockfile) | `gen-onchain.mjs` |
+| access-gate-client, seal-client | 0.0.9, 0.0.20 (lockfile) | `check-onchain-ids.mjs` (the `deployments` records) |
 | lychee | `lycheeverse/lychee-action` v2.9.0 (SHA) | external-link check |
 
-Latest-ID rule: the generated pages and the typed table show a package id that is both published-at and
+Latest-ID rule: the generated pages and the typed table (checked against the clients, F6) show a package id that is both published-at and
 original-id (first versions of the republished packages); the table labels the two columns and says
 "same (v1)".
 
@@ -447,19 +508,22 @@ original-id (first versions of the republished packages); the table labels the t
 
 ### C.1 Coverage grade — N/A (static content)
 
-No unit tests exist (framework: none; `package.json` has no `test` script). The gates are type-check, three
-linters (stylelint, eslint with vuejs-accessibility, html-validate over the theme components), the
-build's internal dead-link check, the CSP hash check (29 pages; image build), the licence-notice check
-and the external link checks, all in `node-ci.yml` except the CSP check. The sample-import check is a
-manual script (names only), not CI; it cannot see argument drift (F7). The production build and the
-generator run from a clean checkout in CI.
+Three vitest files (`tests/`, 18 tests; `npm test`): the on-chain id check (unit cases on temporary trees
+plus a run against this repository's real pages and the installed clients), the sample type-check (every
+fenced `ts` block compiled against the installed packages, with a self-test that a wrong call is reported at
+its Markdown line) and the package contents (`npm pack --dry-run`) with the dist audit check. The other gates
+are type-check, three linters (stylelint, eslint with vuejs-accessibility, html-validate over the theme
+components), the build's internal dead-link check, the CSP hash check (29 pages; image build), the
+licence-notice check and the external link checks, all in `node-ci.yml` except the CSP check. The
+production build and the generator run from a clean checkout in CI. Not covered: the theme components
+(static, no logic) and the served behaviour (live probe).
 
 ### C.2 Hermetic vs. live paths
 
 | Path | Hermetic? | Deferred to | Tracking |
 | --- | --- | --- | --- |
 | Build and checks | yes | — | CI |
-| Samples against the current client signatures | no (needs the packages installed) | manual today | F7 |
+| Samples against the current client signatures | yes (the packages are dev dependencies; no network) | — | `tests/samples.test.mjs` (F7) |
 | External links | no | CI (weekly, blocking) | lychee |
 | Served behaviour (clean URLs, 404, headers, notices) | no | deployment | live probe 2026-10-09/10 (deep links 200, unknown path 404, headers, `/THIRD_PARTY_LICENSES` 200) |
 
@@ -476,48 +540,49 @@ generator run from a clean checkout in CI.
 - [x] 0.0.22 deployed by digest; live probe of a deep link and an unknown path, headers and `/THIRD_PARTY_LICENSES` (2026-10-10)
 - [x] inline scripts hash-covered and checked at build time (`check-csp-inline.mjs`, 29 pages); link check in CI (F3)
 - [x] image: digest-pinned bases, non-root, restricted pod, probes and limits, signed with SBOM and provenance, scanned before signing (F11)
-- [ ] on-chain facts generated from the canonical record — typed literals today (F6, next patch)
-- [ ] samples match the current client signatures; gateway guide matches protocol v2 (F7, F8, next patch)
-- [ ] every test project runs in CI — F10 (nothing to run today; next patch)
-- [ ] the audit file and generated pages are excluded from the npm package — F9 (next patch)
+- [x] on-chain facts checked against the canonical record — `check-onchain-ids.mjs` in `build`, the `deployments` of access-gate-client 0.0.9 and seal-client 0.0.20, `tests/check-onchain-ids.test.mjs` (F6, 0.0.23, 2026-10-18)
+- [x] samples match the current client signatures; gateway guide matches protocol v2 — every `ts` sample type-checked (`tests/samples.test.mjs`); `gateway.md` read against nft-gate 0.0.22 and nft-gate-client 0.0.17 (F7, F8, 0.0.23, 2026-10-18)
+- [x] every test project runs in CI — `npm test` in `node-ci.yml`, called by both release workflows (F10, F16, 0.0.23, 2026-10-18)
+- [x] the audit file and generated pages are excluded from the npm package — `files` negations, `npm pack --dry-run` 36 files, `tests/package-contents.test.mjs`, `check-dist-no-audit.mjs` (F9, 0.0.23, 2026-10-18)
 
 ### pre-mainnet
 
 - [ ] mainnet identifiers in the integration guides once published — mainnet-blocked
 - [x] no sensitive or operator-only content published; audience separation stated (developers here, end users on `docs.`)
-- [ ] API/flag/env pages generated or version-stamped — the gateway configuration table is hand-written and stale (F8, next patch)
+- [x] API/flag/env pages generated or version-stamped — the gateway configuration table is corrected, stamped "checked against nft-gate 0.0.22" and links the READMEs' complete tables (F8, 0.0.23, 2026-10-18)
 - [ ] registry credential inventory and rotation (F15) — `OPERATOR_TASKS.md` "Image registry credentials"
 - [ ] external review — maintainer item (`OPERATOR_TASKS.md` "Funding, grants and an external audit")
 
 ## Cross-project themes
 
-- **Samples are code** — guides teach the hardened client APIs, not raw requests (F1).
+- **Samples are code** — guides teach the hardened client APIs, not raw requests (F1), and are compiled
+  against the installed clients in CI (F7).
 - **Retired features** — no dev pages for DAO or Treasury; apps link the Access Gate guide instead.
 - **Supply chain & release integrity** — lockfile (also shipped in the image); first-party libraries at
-  their latest versions (F12 for the template range); signed images with SBOM and provenance, Trivy
+  their latest versions (F12); signed images with SBOM and provenance, Trivy
   before signing, SHA-pinned actions, grouped Dependabot; expiring audit allowlist; publish authority in B.2.
 - **Wire-format coupling** — the gateway proof message is defined in nft-gate-client and pinned by its
-  `vectors.json`; this site restates it by hand and is behind (F8).
+  `vectors.json`; this site restates it in prose (version-stamped, F8) and compiles the proof-building samples against the
+  client (F7).
 - **On-chain-truth boundary** — the guides state no accounting; fees and terms come from the generated
-  on-chain pages; the typed ids are F6.
+  on-chain pages; the typed ids are checked at build time (F6).
 - **Deployment readiness** — Section D.
 - **Chain-access layering** — the guides teach the layered clients (`access-gate-client`, `seal-client`,
-  `walrus-client`); ids shown are the latest on-chain version, typed by hand (F6).
+  `walrus-client`); ids shown are the latest on-chain version, checked against the clients (F6).
 
 ## Normative requirements (MUST / MUST NOT)
 
-- **TS-M1–TS-M9** — hold where applicable (the lens's rule that every test project runs in CI is vacuous
-  today, F10; TS-M7 packaging has gaps, F9).
+- **TS-M1–TS-M9** — hold (the rule that every test project runs in CI holds since 0.0.23, F10; TS-M7
+  packaging holds, F9).
 - **IMG-M1–IMG-M8** — hold; IMG-M8's verification command pins the repository only (F14).
 - **VUE-M8** — holds (CSP and HSTS on the one hosting path, B.VUE-1).
-- **SITE-M1, M4, M5** — hold; **SITE-M2** (on-chain facts from the canonical record) is not met
-  mechanically (F6); **SITE-M3** holds for the site, not for the npm package (F9). The *Accuracy against
-  code* category is not met for the samples and the gateway guide (F7, F8).
+- **SITE-M1–M5** — hold: SITE-M2 (on-chain facts from the canonical record) is enforced by the build-time
+  id check (F6), SITE-M3 holds for the site and the npm package (F9), and the *Accuracy against code*
+  category holds for the samples and the gateway guide (F7, F8).
 
 ## Implementation suggestions (SHOULD / MAY)
 
-- SHOULD type-check the fenced `ts` samples against the installed packages in CI (F7); the import-name
-  check alone cannot see argument drift.
+- SHOULD keep the sample type-check and its context file current when a client changes its API (F7).
 - SHOULD tighten `connect-src` to `'self'` after a browser probe of search and the footer (F13).
 - MAY run a Trivy configuration scan of the Dockerfile and manifests in CI.
 
@@ -527,8 +592,8 @@ None.
 
 ## Risks
 
-- **Sample drift** — samples fall behind API changes; type-checking them is not automated (F7, F8 are
-  instances).
+- **Sample drift** — mitigated: a client API change that breaks a sample fails `npm test` once the client is
+  bumped here; the gateway guide's prose and configuration table are version-stamped, not compiled (F8).
 - **Pre-release generator** — VitePress is an alpha; a bump can change the emitted inline scripts (the
   build check fails closed) or the page structure.
 - **Registry tokens** — long-lived robot tokens for image pushes (F15).
@@ -557,3 +622,16 @@ None.
   1.0.8 in the lockfile; the live `/sui/` page shows only the new ids; CSP hash check over 29 pages; audit
   gate 1 allowlisted / 0 open. Section D ticked with evidence; unticked: the next-patch items and the
   mainnet/maintainer items.
+- 2026-10-18 — fix wave, 0.0.23: F6 (build-time on-chain id check), F7 (samples follow the current
+  signatures; every `ts` sample type-checked in CI; four further sample defects found by it and fixed),
+  F8 (gateway guide and relay self-host guide describe protocol v2 and the required variables), F9 (`files`
+  negations, `check-dist-no-audit.mjs`; the dry run also showed 17 VitePress cache files, now excluded; 62 to
+  36 files), F10 (`npm test` in CI), F12 (`sui-token-template ^1.0.9`), F16 (the npm `verify` calls
+  `node-ci.yml`), F17 (`CLAUDE.md`, `SECURITY.md`) RESOLVED. Dependencies moved to the latest (walrus-client
+  0.0.28, sui-token-template 1.0.9, nft-gate-client 0.0.17, seal-client 0.0.20, access-gate-client 0.0.9,
+  design-tokens 0.1.10, tooling), the clients and `@mysten/*` added as dev dependencies; image base
+  static-server 0.1.8 (`sha256:e32cf42b…4000`, tag verified on quay.io). F13 and F14 stay ACCEPTED-RISK (no
+  single safe fix without a browser probe or a workspace-script change); F15 stays DEFERRED (maintainer).
+  Section D ticked with evidence; the mainnet-blocked, credential and external-review boxes stay open. Local
+  checks: type-check, lint (css, js, html), `npm test` (18 tests), build with the id and dist checks, CSP
+  check (29 pages), `check:licenses`, audit gate (1 allowlisted, 0 open), `npm pack --dry-run`.

@@ -23,7 +23,9 @@ rather than hard-coding it. A paused gate refuses purchases (`access_gate` abort
 
 The wallet signs the gateway's challenge; the gateway checks the signature, that the nonce is fresh
 and unused, and that the address owns a pass for the gate. The challenge and proof come from
-`@meddleware/nft-gate-client`.
+`@meddleware/nft-gate-client`. The signed message (`nft-gate:access:v2`) is bound to the gateway's
+origin, the gate and the network, so `buildAccessProof` requires all three: a proof made for one
+gateway, gate or network is useless at any other ([the message](./gateway#routes)).
 
 ```ts
 import { fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
@@ -33,13 +35,17 @@ const token = await buildAccessProof({
   address,
   challenge,
   sign: (message) => wallet.signPersonalMessage({ message }), // → { signature }
+  gateway: GATEWAY,                                          // the origin the gateway serves
+  gateId: gate.gateId,                                       // the gate it guards
+  network: 'testnet',
 })
 
 await fetch(`${GATEWAY}/protected/path`, { headers: { Authorization: `Bearer ${token}` } })
 ```
 
 The token is `base64(JSON { address, nonce, signature, consumeDigest? })` and valid for one request
-with that nonce (the challenge TTL defaults to 300 s).
+with that nonce (the challenge TTL defaults to 300 s). Pass only a `GATEWAY` you trust to be the
+origin the user means to prove access to: the origin is part of what the wallet signs.
 
 ### Single-use gateways
 
@@ -48,11 +54,20 @@ redeems each consume once:
 
 ```ts
 import { buildConsumeTx } from '@meddleware/access-gate-client'
+import { fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
 
 const challenge = await fetchChallenge(GATEWAY)
 const consume = await exec.signAndExecute(buildConsumeTx(gate, passId, challenge.nonce))
 await exec.waitForTransaction(consume.digest)
-const token = await buildAccessProof({ address, challenge, sign, consumeDigest: consume.digest })
+const token = await buildAccessProof({
+  address,
+  challenge,
+  sign: (message) => wallet.signPersonalMessage({ message }),
+  gateway: GATEWAY,
+  gateId: gate.gateId,
+  network: 'testnet',
+  consumeDigest: consume.digest,
+})
 ```
 
 `consume` takes the pass by value, so only its holder can spend it; the emitted

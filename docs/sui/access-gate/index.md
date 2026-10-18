@@ -32,7 +32,7 @@ npm install @meddleware/nft-gate-client   # only to prove access to a gateway
 | `AccessNFT` / `SoulboundAccessNFT` | The pass. Soulbound passes have no `store` ability, so they cannot be transferred |
 | Unlimited vs single-use | `default_uses = 0` → valid while held; `N` → `N` uses, each spent on-chain by the holder with `consume` |
 | `PlatformConfig` | Shared object with the platform treasury and commission rate |
-| Challenge / proof | A gateway issues a nonce; the wallet signs `nft-gate:access:<nonce>`; the proof token is sent as `Authorization: Bearer …` |
+| Challenge / proof | A gateway issues a nonce; the wallet signs the `nft-gate:access:v2` message, which binds the gateway origin, gate id, network and nonce (and the consume digest on single-use gateways); the proof token is sent as `Authorization: Bearer …` |
 
 ## Configure a gate
 

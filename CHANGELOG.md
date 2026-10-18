@@ -1,5 +1,40 @@
 # Changelog — @meddleware/dev
 
+## 0.0.23 (2026-10-18)
+
+### Added
+
+- Build-time drift check `scripts/check-onchain-ids.mjs`: the build fails when a hand-written page carries a
+  32-byte `0x…` id that is not a current testnet id in the `deployments` of `@meddleware/access-gate-client` /
+  `@meddleware/seal-client` (the Seal key-server ids are allowlisted in the script), or when the testnet table in
+  `docs/sui/index.md` lacks one of its four ids; `scripts/check-dist-no-audit.mjs` fails the build if an audit
+  page reaches `dist/`.
+- A `test` script (vitest): the id check, the package contents, and a type-check of every fenced `ts` sample
+  against the installed `@meddleware/*` / `@mysten/*` packages (`tests/samples.test.mjs`). CI and both release
+  workflows run it.
+
+### Changed
+
+- Access Gate gateway guide and the relay self-host guide describe protocol v2 (`nft-gate:access:v2`, audience
+  bound to the gateway origin, gate and network) and the required `GATEWAY_ORIGIN`, `NETWORK`, `NFT_TYPE`, `GATE_ID`;
+  the `409` codes (`redeemed`, `leased`); `UPSTREAM_AUTH_HEADERS` as a JSON array; the Rust gateway needs
+  `ALLOW_INSECURE_HTTP` for an `http://` upstream and `REDIS_URL` with `SINGLE_USE`.
+- Samples follow the current client signatures: `buildAccessProof` takes `gateway`, `gateId` and `network`;
+  `createGatedAccess` and `createRelayAccessToken` take `gateId` and `network` (new `createRelayAccessToken`
+  sample); the Seal sample sets `accessGateOriginalId`, says that sealing to a gate with transferable passes is
+  refused (`allowTransferableGates`), and passes the registry to `parseSealedManifest`; the lifetime and
+  attribute samples `await` the transaction builders; the single-use sample is self-contained.
+- Dependencies: sui-token-template ^1.0.9, design-tokens ^0.1.10, walrus-client ^0.0.28, nft-gate-client ^0.0.17,
+  seal-client ^0.0.20, access-gate-client ^0.0.9 (the clients are now dev dependencies, for the checks) and the
+  tooling updates; image base static-server 0.1.8.
+- The npm release gate calls the full CI workflow (`node-ci.yml`), as the image release does.
+- `CLAUDE.md` and `SECURITY.md` describe the real pipeline (checks, id check, sample type-check, packaging).
+
+### Fixed
+
+- The npm package no longer carries the internal audit (`docs/audit/`), the generated copies of the Move
+  packages' pages (`docs/sui/onchain/`, `docs/.vitepress/generated/`) or the VitePress cache (36 files, was 62).
+
 ## 0.0.17 (2026-10-03)
 
 - Blob reads use walrus-client's `readBlob` (timeout, size cap, strict consistency check) in the

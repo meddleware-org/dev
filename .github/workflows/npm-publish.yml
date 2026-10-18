@@ -3,7 +3,7 @@ name: Publish (npm)
 # Publishes the app's library entry (@meddleware/dev) to npmjs on a v* tag, so it can be
 # embedded by the dashboard. npm is a SECONDARY output here (the app also ships a
 # container image via docker-publish.yml), so publication is opt-in via the
-# repository variable NPM_PUBLISH and gated on a self-contained `verify` job.
+# repository variable NPM_PUBLISH and gated on the `verify` job (the full CI workflow).
 # Authentication uses npm OIDC trusted publishing — no long-lived NPM_TOKEN.
 
 on:
@@ -15,22 +15,11 @@ permissions:
   contents: read
 
 jobs:
+  # The release runs exactly what CI runs (audit gate, type-check, linters, unit tests, build, licences)
+  # on the tagged commit, so no check can be skipped by tagging.
   verify:
-    name: Verify (type-check + test)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '24'
-      - name: Install dependencies
-        run: npm ci
-      - name: Audit dependencies
-        run: node .github/audit-gate.mjs
-      - name: Type-check
-        run: npm run type-check
-      - name: Unit tests
-        run: npm run test --if-present
+    name: Verify (CI checks)
+    uses: ./.github/workflows/node-ci.yml
 
   publish-npm:
     name: npmjs (@meddleware/dev)

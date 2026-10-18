@@ -19,9 +19,10 @@ Developer-facing integration guides, SDK references, and self-host instructions.
 ## Build
 
 ```bash
-npm run build    # vitepress build docs → dist/
+npm run build    # gen:onchain → check:onchain-ids → vitepress build docs → dist/ → check-dist-no-audit
 npm run dev      # dev server
 npm run type-check
+npm test         # vitest: on-chain id check, ts-sample type-check, package contents
 ```
 
 No `gen:api` (TypeDoc) step. The only prebuild is `gen:onchain` (run automatically by `build`/`dev`):
@@ -35,7 +36,25 @@ No `gen:api` (TypeDoc) step. The only prebuild is `gen:onchain` (run automatical
   (placeholder pages for every standard page name). Fix on-chain content in the Move repo, not here;
   hand-written pages link to the imported ones instead of duplicating Move tables.
 
-`npm run build` is the only required CI step.
+### Checks (CI = `node-ci.yml`; both release workflows call it, so a tag cannot skip one)
+
+- audit gate (`.github/audit-gate.mjs`), `type-check`, `npm test`, the three linters (`lint:css`,
+  `lint:js`, `lint:html`), `build`, `check:licenses`; the image build also runs
+  `scripts/check-csp-inline.mjs` against the CSP in the `Dockerfile`.
+- **On-chain ids are checked, not generated.** Hand-written pages carry the testnet ids of
+  `access_gate` / `seal_policies` (`docs/sui/index.md` table) and the Seal key-server object ids.
+  `scripts/check-onchain-ids.mjs` (part of `build`) fails when any 32-byte id in a page differs from the
+  `deployments` of `@meddleware/access-gate-client` / `@meddleware/seal-client` or when the table lacks
+  one; the key-server ids are listed in the script's `OTHER_IDS`. After a republication: bump the clients,
+  edit the page to the new ids.
+- **Samples are type-checked.** `tests/samples.test.mjs` compiles every fenced `ts` block under `docs/`
+  against the installed `@meddleware/*` / `@mysten/*` packages. Names the prose assumes (`exec`, `gate`,
+  `client`, …) are declared in `tests/samples-context.d.ts`; a block that cannot be checked needs a
+  `<!-- sample: skip — reason -->` line before the fence (keep these few).
+- **Packaging.** `docs/audit/` (the internal review), the generated `docs/sui/onchain/` and
+  `docs/.vitepress/generated/` never ship in the npm package (`files` negations; pinned by
+  `tests/package-contents.test.mjs`) and the audit never reaches `dist/` (`srcExclude`,
+  `scripts/check-dist-no-audit.mjs`).
 
 ## White-label annotation convention
 

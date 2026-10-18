@@ -39,6 +39,9 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
+      - name: Unit tests (on-chain id check, sample type-check, package contents)
+        run: npm test
+
       - name: Lint CSS (stylelint)
         run: npm run lint:css
 
@@ -49,7 +52,9 @@ jobs:
         run: npm run lint:html
 
       # `vitepress build` fails on dead INTERNAL links by default (ignoreDeadLinks unset), so this
-      # step is the internal-strict link gate.
+      # step is the internal-strict link gate. The build also fails when an on-chain id typed into a
+      # page differs from the clients' deployments (scripts/check-onchain-ids.mjs) or when the built
+      # site contains an audit page (scripts/check-dist-no-audit.mjs).
       - name: Build (internal-strict dead-link detection)
         run: npm run build
 

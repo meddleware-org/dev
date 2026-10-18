@@ -15,16 +15,19 @@ the proof must carry the digest of an on-chain `consume` bound to the gateway's 
 `@meddleware/walrus-client/flow` runs the whole upload, including that step:
 
 ```ts
+import type { Transaction } from '@mysten/sui/transactions'
 import { consumeStorageKey, createGatedAccess, runBlobUpload } from '@meddleware/walrus-client/flow'
 import { buildConsumeTx } from '@meddleware/access-gate-client'
 
 const RELAY = 'https://sui-walrus-relay-testnet.meddleware.co.uk'
 
-const access = createGatedAccess({
+const access = createGatedAccess<Transaction>({
   storage: localStorage,
   key: consumeStorageKey('testnet', gateConfig.gateId, address),
   relayHost: RELAY,
   address,
+  gateId: gateConfig.gateId,   // signed into every proof, with the network
+  network: 'testnet',
   nftId: passId,
   singleUse: usesRemaining !== null, // an unlimited pass only signs
   buildConsume: (id, nonce) => buildConsumeTx(gateConfig, id, nonce),
@@ -52,8 +55,23 @@ What the flow guarantees:
 - **Duplicates are caught before paying:** pass `findExistingCopy` and an existing owned copy aborts
   before register (`getDuplicateExisting(err)`).
 
-For a gateway **without** single-use mode, `createRelayAccessToken({ relayHost, address, sign })` from
-`@meddleware/walrus-client` returns a token to pass as `createWalrusClient({ uploadRelayAuthToken })`.
+For a gateway **without** single-use mode, `createRelayAccessToken` from `@meddleware/walrus-client`
+returns a token to pass as `createWalrusClient({ uploadRelayAuthToken })`:
+
+```ts
+import { createRelayAccessToken, createWalrusClient } from '@meddleware/walrus-client'
+
+const RELAY = 'https://sui-walrus-relay-testnet.meddleware.co.uk' // as above
+
+const token = await createRelayAccessToken({
+  relayHost: RELAY,
+  address,
+  gateId: gateConfig.gateId,   // the gate the relay guards, and the network, are signed into the proof
+  network: 'testnet',
+  sign: (message) => wallet.signPersonalMessage({ message }),
+})
+const relayWalrus = createWalrusClient({ network: 'testnet', uploadRelayHost: RELAY, uploadRelayAuthToken: token })
+```
 
 `gateConfig` is the `AccessGateConfig` of the gate the relay checks — `relayGateConfig(network,
 { gateId, soulbound, priceMist })` from
@@ -74,7 +92,7 @@ registration.
 ```ts
 import { extendBlobLifetimeTransaction } from '@meddleware/walrus-client'
 
-const tx = extendBlobLifetimeTransaction(walrus, blobObjectId, { epochs: 26 }) // or { endEpoch }
+const tx = await extendBlobLifetimeTransaction(walrus, blobObjectId, { epochs: 26 }) // or { endEpoch }
 await exec.signAndExecute(tx)
 ```
 
@@ -109,7 +127,7 @@ On-chain key/value metadata on a `Blob` object:
 ```ts
 import { setBlobAttributesTransaction, readBlobAttributes } from '@meddleware/walrus-client'
 
-await exec.signAndExecute(setBlobAttributesTransaction(walrus, blobObjectId, { 'content-type': 'image/png' }))
+await exec.signAndExecute(await setBlobAttributesTransaction(walrus, blobObjectId, { 'content-type': 'image/png' }))
 const attrs = await readBlobAttributes(walrus, blobObjectId) // null when none are set
 ```
 

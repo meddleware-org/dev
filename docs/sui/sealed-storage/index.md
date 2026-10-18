@@ -32,6 +32,7 @@ import { SuiGrpcClient } from '@mysten/sui/grpc'
 import { createDefaultRegistry } from '@meddleware/seal-client'
 import { SealController } from '@meddleware/seal-client/controller' // also on the main entry; the subpath lets apps lazy-load @mysten/seal
 import { sealPoliciesDeployment } from '@meddleware/seal-client/deployments'
+import { accessGateDeployment } from '@meddleware/access-gate-client/deployments'
 
 const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
 
@@ -39,6 +40,11 @@ const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://full
 // target of seal_approve calls; policyConfigId: the shared version gate every seal_approve reads.
 // All three come from the package's recorded deployments.
 const { originalId, publishedAt, policyConfigId } = sealPoliciesDeployment('testnet')
+// The access_gate package that seal_policies links: with it set, `encrypt('nft-gate', …)` reads the gate
+// first and refuses one that is not a Gate of that package, or whose passes are transferable.
+const accessGateOriginalId = accessGateDeployment('testnet').originalId
+
+const registry = createDefaultRegistry(accessGateOriginalId)
 
 const seal = new SealController(
   {
@@ -46,6 +52,7 @@ const seal = new SealController(
     originalId,
     publishedAt,
     policyConfigId,
+    accessGateOriginalId,
     threshold: 2,
     serverConfigs: [
       // Mysten testnet committee (decentralised server, via the aggregator) + two independent servers
@@ -55,9 +62,17 @@ const seal = new SealController(
       { objectId: '0xf5d14a81a982144ae441cd7d64b09027f116a468bd36e7eca494f750591623c8', weight: 1 },
     ],
   },
-  createDefaultRegistry(),
+  registry,
 )
 ```
+
+::: warning Seal to soulbound gates only
+With `accessGateOriginalId` set, `encrypt('nft-gate', …)` **refuses a gate that mints transferable
+passes** (`allowTransferableGates: true` opts in). The holder of a transferable pass can freeze or
+share it, after which anyone can present it and the policy approves — the content is then effectively
+public. Seal to a soulbound gate, and leave `accessGateOriginalId` unset only if you check this
+yourself: without it the controller does not read the gate.
+:::
 
 These are the committee defaults `seal-ui` uses on testnet. On mainnet the Mysten committee
 aggregator requires an API key; see the Seal docs.
@@ -87,7 +102,8 @@ interface SealedManifest {
 }
 ```
 
-Validate untrusted manifests with `parseSealedManifest(raw)` (throws `SealedManifestError`), then
+Validate untrusted manifests with `parseSealedManifest(raw, registry)` (throws `SealedManifestError`; the
+registry also validates the policy's `params`), then
 check `network` matches your app.
 
 See the [integration guide](./integration) for end-to-end code and [Writing policies](./policies)

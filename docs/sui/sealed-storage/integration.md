@@ -1,6 +1,6 @@
 # Sealed Storage — Integration guide
 
-Examples use the `seal` controller from the [SDK setup](./), a Walrus client `walrus` from
+Examples use the `seal` controller and `registry` from the [SDK setup](./), a Walrus client `walrus` from
 [`createWalrusClient`](/sui/walrus-storage/), and an executor `exec` that signs and executes
 transactions (in Vue: `@meddleware/wallet-adapter`).
 
@@ -10,7 +10,8 @@ transactions (in Vue: `@meddleware/wallet-adapter`).
 import { createBlobUploadFlow } from '@meddleware/walrus-client'
 import type { SealedManifest } from '@meddleware/seal-client'
 
-// 1. Encrypt locally: anyone holding a valid pass for `gateId` will be able to decrypt
+// 1. Encrypt locally: anyone holding a valid pass for `gateId` will be able to decrypt. The
+//    controller (SDK setup) refuses a gate that mints transferable passes: seal to a soulbound gate.
 const { id, ciphertext } = await seal.encrypt('nft-gate', { gateId }, plaintextBytes)
 
 // 2. Store the ciphertext (register → upload → certify; see Walrus Storage)
@@ -27,6 +28,11 @@ const { blobId } = await flow.getBlob()
 const manifest: SealedManifest = { policyType: 'nft-gate', id, blobId, network: 'testnet', params: { gateId } }
 ```
 
+Sealing to a gate whose passes are **transferable** is refused unless the controller was created with
+`allowTransferableGates: true`: a holder can freeze or share such a pass, and the content becomes
+effectively public. The check needs `accessGateOriginalId` in the controller config (see
+[Create a controller](./#create-a-controller)).
+
 A time lock instead: `seal.encrypt('time-lock', { unlockMs: Date.parse('2027-01-01') }, bytes)`.
 
 ## Decrypt
@@ -36,7 +42,7 @@ import { parseSealedManifest, SealedManifestError } from '@meddleware/seal-clien
 import { WALRUS_AGGREGATOR_HOSTS } from '@meddleware/walrus-client'
 import { readBlob } from '@meddleware/walrus-client/http'
 
-const m = parseSealedManifest(untrustedJson)
+const m = parseSealedManifest(untrustedJson, registry) // `registry` from the SDK setup: it also validates the policy's params
 if (m.network !== 'testnet') throw new Error('Manifest is for another network')
 
 // Timeout, size cap (100 MiB by default) and the aggregator's strict consistency check.

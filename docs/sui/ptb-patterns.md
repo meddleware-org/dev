@@ -104,6 +104,7 @@ Meddleware apps use [`@meddleware/wallet-adapter`](https://www.npmjs.com/package
 a wallet-standard composable whose connection is shared by every view in the window:
 
 ```ts
+import type { Transaction } from '@mysten/sui/transactions'
 import { useWallet } from '@meddleware/wallet-adapter'
 
 const { account, buildExecutor } = useWallet({ requiredFeatures: ['sui:signTransaction'] })

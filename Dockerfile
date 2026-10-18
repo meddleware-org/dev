@@ -23,7 +23,7 @@ ARG CSP
 RUN node scripts/check-csp-inline.mjs "${CSP}" dist
 
 # ── runtime stage ─────────────────────────────────────────────────────────────
-FROM quay.io/meddleware-org/static-server:0.1.7@sha256:2e2273115b7575acbeb01c6d75f867be67125405f1bda5d956ae512d13c92379
+FROM quay.io/meddleware-org/static-server:0.1.8@sha256:e32cf42b182d270c4ef57181e5588e7df454a42cac66e83d8ae59d9c7b7c4000
 ARG CSP
 ENV CONTENT_SECURITY_POLICY="${CSP}"
 
