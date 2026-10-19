@@ -357,8 +357,8 @@ default was the only remaining problem.
 ### F15 — Self-hosted registry mirror and registry credentials
 
 **Severity:** Info   **Disposition:** DEFERRED (maintainer; `OPERATOR_TASKS.md` "Image registry credentials — record scope and rotation")
-**Where:** `docker-publish.yml` private build and merge jobs (`continue-on-error: true`); `QUAY_TOKEN`, `DOCKERHUB_TOKEN`
-**Issue:** the mirror jobs fail without registry credentials and never sign; the quay.io and Docker Hub
+**Where:** `docker-publish.yml` `mirror-private` job (`continue-on-error: true`); `QUAY_TOKEN`, `DOCKERHUB_TOKEN`
+**Issue:** the `mirror-private` job (a digest-preserving copy of the published, signed image, not a rebuild) fails without registry credentials; the quay.io and Docker Hub
 tokens are long-lived and not yet inventoried.
 **Impact:** the mirror may lag; a leaked token could push an unsigned tag (the cluster pins digests and
 verifies signatures, so it would not run).
@@ -644,3 +644,4 @@ None.
 - 2026-10-19 — dependency-bot status checked (read-only): `.github/dependabot.yml` carries the `ignore` rules and the repository has no open Dependabot pull requests (`gh pr list`, 2026-10-19). Versions, findings and gates were not re-examined in this pass.
   - `Dockerfile` on GitHub `main` now pins the `static-server` base at `0.1.9@sha256:af6cc284…edc72` (merged Dependabot docker PR); this repo was not re-released or redeployed for it, so the deployed image is still built on the 0.1.8 base (the stock default CSP added in 0.1.9 is replaced by this repo's own `CONTENT_SECURITY_POLICY`).
   - Dependabot policy encoded in .github/dependabot.yml (majors declined); open PRs merged 2026-10-19
+  - `docker-publish.yml`: the private rebuild jobs are replaced by one `mirror-private` job that copies the published quay.io image (and its cosign artifacts) to the self-hosted registry by digest and fails unless the digest and the signature match (build once, promote by digest; committed locally, not yet released; the `PRIVATE_REGISTRY_*` credentials are still unset).
