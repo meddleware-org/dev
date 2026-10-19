@@ -1,5 +1,13 @@
 # Changelog — @meddleware/dev
 
+## 0.0.24 (2026-10-19)
+
+### Changed
+
+- The platform-terms note and the Access Gate integration sample quote the re-priced defaults (workspace cost
+  model, decision D57): a 0.0005 SUI commission floor, so a paid pass costs at least 0.005 SUI. Release together
+  with `@meddleware/access-gate-sui` 0.0.7 (the generated on-chain pages).
+
 ## 0.0.23 (2026-10-18)
 
 ### Added

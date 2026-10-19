@@ -88,7 +88,7 @@ import {
   buildMakeGateImmutableTx, fetchPlatformConfig, minimumPaidPriceMist, gateCommissionMist,
 } from '@meddleware/access-gate-client'
 
-// Platform terms: commission floor → minimum paid price (0.01 SUI by default), free-gate fee
+// Platform terms: commission floor → minimum paid price (0.005 SUI by default), free-gate fee
 const platform = await fetchPlatformConfig(client, platformConfigId, originalId)
 const minPrice = minimumPaidPriceMist(platform.minCommissionMist)
 

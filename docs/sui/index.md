@@ -58,8 +58,8 @@ and `0x9f0563…`, replaced on 2026-10-02 by the version-gated packages) keep se
 them; new gates and content use the IDs above.
 
 ::: info Platform terms
-Every gate of `access_gate` pays the platform: 0.2% of each sale, never less than 0.001 SUI and
-never more than 10% (so a paid pass costs at least 0.01 SUI), a one-off fee to make a gate free, and
+Every gate of `access_gate` pays the platform: 0.2% of each sale, never less than 0.0005 SUI and
+never more than 10% (so a paid pass costs at least 0.005 SUI), a one-off fee to make a gate free, and
 the same commission on airdrops. The terms live in `PlatformConfig` — see the
 [API reference](/sui/onchain/access-gate/api-reference#commission-and-fees).
 :::
