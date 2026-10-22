@@ -650,3 +650,4 @@ None.
   0.005 SUI). Version 0.0.24, commit pending; the generated on-chain pages follow once `@meddleware/access-gate-sui`
   0.0.7 is published and the range bumped. Measured with Node 26.12.0: type-check, lint, 18/18 tests and build
   pass. No disposition changes.
+- 2026-10-22 (audit close-out) — release 0.0.25 (`v0.0.25` = `7ae69f7`; `Publish (npm)` and `Publish (Docker)` succeeded). Image base: static-server 0.1.11 (Go 1.26.10 standard library, CVE-2026-111943, so the scan-before-sign gate passes; static-server F13). Advisory: `vite` 8.3.5 in the lockfile (GHSA-587h-7wmj-h5pm, `launch-editor`; a transitive build/dev-server dependency, `package-lock.json` only). F13 (the `connect-src` item) stays open as a separate code task. No disposition change. Not re-run in this pass: the unit tests, the build and the audit gate (the tag's own CI and publish runs succeeded).
