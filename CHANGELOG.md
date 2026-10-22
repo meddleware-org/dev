@@ -81,6 +81,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.25] - 2026-10-22
+
+### Changed
+
+- Image base: static-server 0.1.11 (Go 1.26.10 standard library, CVE-2026-111943, so the scan-before-sign gate passes)
+
 ## [0.0.22] - 2026-10-09
 
 ### Changed
