@@ -1,5 +1,17 @@
 # Changelog — @meddleware/dev
 
+## 0.0.26 (2026-10-22)
+
+### Security
+
+- The image's Content-Security-Policy is `connect-src 'self'` (was `'self' https:`): the site's local search and footer load same-origin files only. A headless Chromium probe against the built site under the new policy found search results and the footer working with zero violations, and a deliberate cross-origin `fetch` is blocked. A test pins the directive.
+
+## 0.0.25 (2026-10-22)
+
+### Changed
+
+- Image base: static-server 0.1.11 (Go 1.26.10 standard library, CVE-2026-111943, so the scan-before-sign gate passes).
+
 ## 0.0.24 (2026-10-19)
 
 ### Changed
