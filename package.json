@@ -53,7 +53,7 @@
     "@meddleware/access-gate-sui": "^0.0.7",
     "@meddleware/nft-gate-client": "^0.0.17",
     "@meddleware/seal-client": "^0.0.20",
-    "@meddleware/seal-policies-sui": "^0.0.7",
+    "@meddleware/seal-policies-sui": "^0.0.8",
     "@meddleware/sui-token-template": "^1.0.9",
     "@meddleware/wallet-adapter": "^0.0.17",
     "@meddleware/walrus-client": "^0.0.29",
