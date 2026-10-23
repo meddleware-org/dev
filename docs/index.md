@@ -22,15 +22,15 @@ features:
     link: /design-system/
     linkText: Design system
   - title: Walrus Storage
-    details: Upload, read, and extend blobs with the @meddleware/walrus-client SDK. Self-host your own Walrus relay.
+    details: Upload, read, and extend blobs with the @meddleware/walrus-storage-client SDK. Self-host your own Walrus relay.
     link: /sui/walrus-storage/
     linkText: Walrus Storage
   - title: Sealed Storage
-    details: Encrypt data on Walrus with on-chain access-control policies. Write Move policies and integrate the @meddleware/seal-client SDK.
+    details: Encrypt data on Walrus with on-chain access-control policies. Write Move policies and integrate the @meddleware/sealed-storage-client SDK.
     link: /sui/sealed-storage/
     linkText: Sealed Storage
   - title: Access Gate
-    details: Create NFT access-gate passes, verify them in your app, and deploy the nft-gate gateway.
+    details: Create NFT access-gate passes, verify them in your app, and deploy the access-gate gateway.
     link: /sui/access-gate/
     linkText: Access Gate
   - title: Contract layout

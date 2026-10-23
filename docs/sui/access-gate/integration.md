@@ -23,12 +23,12 @@ rather than hard-coding it. A paused gate refuses purchases (`access_gate` abort
 
 The wallet signs the gateway's challenge; the gateway checks the signature, that the nonce is fresh
 and unused, and that the address owns a pass for the gate. The challenge and proof come from
-`@meddleware/nft-gate-client`. The signed message (`nft-gate:access:v2`) is bound to the gateway's
+`@meddleware/access-gate-gateway-client`. The signed message (`nft-gate:access:v2`) is bound to the gateway's
 origin, the gate and the network, so `buildAccessProof` requires all three: a proof made for one
 gateway, gate or network is useless at any other ([the message](./gateway#routes)).
 
 ```ts
-import { fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
+import { fetchChallenge, buildAccessProof } from '@meddleware/access-gate-gateway-client'
 
 const challenge = await fetchChallenge(GATEWAY)            // GET /v1/challenge → { nonce, expiresAt }
 const token = await buildAccessProof({
@@ -54,7 +54,7 @@ redeems each consume once:
 
 ```ts
 import { buildConsumeTx } from '@meddleware/access-gate-client'
-import { fetchChallenge, buildAccessProof } from '@meddleware/nft-gate-client'
+import { fetchChallenge, buildAccessProof } from '@meddleware/access-gate-gateway-client'
 
 const challenge = await fetchChallenge(GATEWAY)
 const consume = await exec.signAndExecute(buildConsumeTx(gate, passId, challenge.nonce))
@@ -74,7 +74,7 @@ const token = await buildAccessProof({
 `AccessConsumedEvent` records the nonce and the consumer, which is what the gateway matches.
 Exhausted passes are deleted if the gate auto-burns, otherwise kept as receipts.
 
-For a Walrus upload relay, `createGatedAccess` in `@meddleware/walrus-client/flow` wraps this: it
+For a Walrus upload relay, `createGatedAccess` in `@meddleware/walrus-storage-client/flow` wraps this: it
 persists the consume digest before the upload, so an interrupted upload never spends a second use.
 
 ## Operating gates

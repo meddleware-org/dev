@@ -1,21 +1,21 @@
 # Security Audit — `dev`
 
 **Classification:** Internal security review
-**Project:** `repos/dev` — `@meddleware/dev`, VitePress developer documentation (`dev.meddleware.co.uk`): integration guides, PTB patterns, gateway and relay self-hosting, design system, imported on-chain developer pages
+**Project:** `repos/dev-site` — `@meddleware/dev-site`, VitePress developer documentation (`dev.meddleware.co.uk`): integration guides, PTB patterns, gateway and relay self-hosting, design system, imported on-chain developer pages
 **Project type:** Static site (VitePress)
 **Template:** AUDIT_TEMPLATE.md (2026-10-08) + AUDIT_TEMPLATE_TS.md (2026-10-08) + AUDIT_TEMPLATE_VUE.md (2026-10-08, hosting-header rows) + AUDIT_TEMPLATE_IMG.md (2026-10-08) + AUDIT_TEMPLATE_SITE.md (2026-09-30)
-**Package manager / lockfile:** npm 11, committed (also copied into the image for SBOM tools)   **Module format:** ESM (build scripts `.mjs`, VitePress config and theme TypeScript)   **Publish model:** image + npm package (ships `docs/`, `scripts/` and config; `NPM_PUBLISH` opt-in, enabled — `@meddleware/dev` 0.0.23 is on npm)
+**Package manager / lockfile:** npm 11, committed (also copied into the image for SBOM tools)   **Module format:** ESM (build scripts `.mjs`, VitePress config and theme TypeScript)   **Publish model:** image + npm package (ships `docs/`, `scripts/` and config; `NPM_PUBLISH` opt-in, enabled — `@meddleware/dev-site` 0.0.23 is on npm)
 **Runtime targets:** browser (static HTML); Node 24 for the build   **Peer dependencies:** none
 **Generator:** vitepress 2.0.0-alpha.20 (vue 3.5.44, TypeScript 6.0.3); vitest 5.0.5 (unit tests); no TypeDoc step (the API reference is on `docs.`)
-**Generated sources:** `scripts/gen-onchain.mjs` — the Move packages' `docs/onchain` pages from `@meddleware/access-gate-sui` 0.0.6, `seal-policies-sui` 0.0.7, `sui-token-template` 1.0.9 (lockfile; `ONCHAIN_DOCS_ROOT` is a local preview override only)
+**Generated sources:** `scripts/gen-onchain.mjs` — the Move packages' `docs/onchain` pages from `@meddleware/access-gate-sui` 0.0.6, `sealed-storage-sui` 0.0.7, `token-issuance-template-sui` 1.0.9 (lockfile; `ONCHAIN_DOCS_ROOT` is a local preview override only)
 **Audience:** developers and operators (user-facing documentation is `docs.meddleware.co.uk`)
 **Unpublished material:** `drafts/` (retired DAO page, vault notes) sits outside `srcDir`, is not in the npm `files` list and is never linked; this audit lives in `docs/audit/` and is excluded from the site by `srcExclude: ['audit/**']` (live `/audit/dev-audit` answers 404); `package.json` `files` negates it, the generated pages and the cache for the npm package, and the build fails if an audit page reaches `dist/` (F9, 0.0.23); white-label content is annotation-only (HTML comments, stripped by VitePress)
-**Images:** `quay.io/meddleware-org/dev:0.0.23@sha256:e94eed8395950ad219813bce2c4f3b0b22fbb89061be641f4c552c2f3b9257d6` (Docker Hub mirror, same digest; cosign keyless signature verified 2026-10-18 against the workflow-anchored identity, `verify-digests.sh` 16/16; SPDX SBOM attestation, build provenance). Superseded 0.0.22 was `sha256:dfad63d6…ee1c`
+**Images:** `quay.io/meddleware-org/dev-site:0.0.23@sha256:e94eed8395950ad219813bce2c4f3b0b22fbb89061be641f4c552c2f3b9257d6` (Docker Hub mirror, same digest; cosign keyless signature verified 2026-10-18 against the workflow-anchored identity, `verify-digests.sh` 16/16; SPDX SBOM attestation, build provenance). Superseded 0.0.22 was `sha256:dfad63d6…ee1c`
 **Base images:** build `node:24-slim@sha256:0e0ff40c…f9b6`; runtime `quay.io/meddleware-org/static-server:0.1.8@sha256:e32cf42b…4000` in 0.0.23 (the 0.0.22 image deployed 2026-10-09 was on 0.1.7, `sha256:2e227311…2379`, Go 1.26.9)
 **Runtime user:** `USER 65534:65534`   **Runtime FS:** read-only root, no writable mounts
-**Deployed by:** `post-bootstrap/dev/overlays/default`; digest from `config/images.yaml`
+**Deployed by:** `post-bootstrap/dev-site/overlays/default`; digest from `config/images.yaml`
 **Build args:** `CSP` only (the Content-Security-Policy string) — not secret, not a test switch; no `VITE_*`
-**Deployment status:** npm v0.0.23 and image `quay.io/meddleware-org/dev` 0.0.23 serving `dev.meddleware.co.uk` (`sha256:e94eed83…57d6`; release tag `v0.0.23` = `497bb5d`; released, signature verified and deployed 2026-10-18, rollout succeeded; 0.0.22 `sha256:dfad63d6…` was deployed 2026-10-09; live headers, `/sui/` (200), an unknown path (404) and `/THIRD_PARTY_LICENSES` (200) re-checked 2026-10-18; live `/sui/` carries the republished testnet ids `access_gate` `0xd7ddaa94…`, PlatformConfig `0x3f81489d…`, `seal_policies` `0x0c8f7349…`, PolicyConfig `0xee0403ba…`)
+**Deployment status:** npm v0.0.23 and image `quay.io/meddleware-org/dev-site` 0.0.23 serving `dev.meddleware.co.uk` (`sha256:e94eed83…57d6`; release tag `v0.0.23` = `497bb5d`; released, signature verified and deployed 2026-10-18, rollout succeeded; 0.0.22 `sha256:dfad63d6…` was deployed 2026-10-09; live headers, `/sui/` (200), an unknown path (404) and `/THIRD_PARTY_LICENSES` (200) re-checked 2026-10-18; live `/sui/` carries the republished testnet ids `access_gate` `0xd7ddaa94…`, PlatformConfig `0x3f81489d…`, `seal_policies` `0x0c8f7349…`, PolicyConfig `0xee0403ba…`)
 **Review date:** 2026-10-03 (first pass) · re-verified 2026-10-09 · fixes 2026-10-18 (0.0.23, released and deployed)
 **Reviewer:** Internal review
 **Severity ceiling:** Low — static content. Its code samples are copied into other people's apps, so a sample that teaches an unsafe pattern is the realistic harm.
@@ -33,7 +33,7 @@ the current packages (checked mechanically for this pass).
 This first pass found, and fixed in 0.0.17:
 
 - **F1 (Low)** — the blob-read samples used a bare `fetch` of the aggregator URL, teaching readers to
-  skip the timeout, size cap and consistency check that walrus-client's `readBlob` provides.
+  skip the timeout, size cap and consistency check that walrus-storage-client's `readBlob` provides.
 - **F2 (Low)** — the same SPA-fallback serving as the docs site (docs F11): deep links returned the
   home page and unknown paths returned 200. Fixed with static-server 0.1.4's clean URLs and 404 page.
 - **F3 (Low)** — the blocking external link check could not resolve root-relative links with the
@@ -88,15 +88,15 @@ Critical / High / Medium / Low / Info / Positive.
 - **In scope (0.0.23):** `docs/**` (guides, design system, getting started, Sui sections),
   `docs/.vitepress/**`, `scripts/{gen-onchain,check-onchain-ids,check-dist-no-audit,check-csp-inline,third-party-licenses}.mjs`, `tests/**`, `Dockerfile`,
   `.dockerignore`, workflows, `.github/{audit-gate.mjs,audit-allowlist.json,dependabot.yml}`, `SECURITY.md`,
-  `CLAUDE.md`, `post-bootstrap/dev/` (read-only).
+  `CLAUDE.md`, `post-bootstrap/dev-site/` (read-only).
 - **Out of scope:** the packages documented (own audits); `drafts/` (not built, not published).
 - **Environment (2026-10-18, 0.0.23):** `tsc --noEmit` (clean); `npm test` (vitest 5.0.5: 18 tests in 3
   files); stylelint, eslint and html-validate (clean); `npm run build` including `check-onchain-ids.mjs`
   and `check-dist-no-audit.mjs`; `check-csp-inline.mjs` against the 0.0.23 `dist` (29 HTML files, all inline
   scripts covered); `check:licenses` (27 production packages); audit gate (1 allowlisted advisory, 0 open);
-  `npm pack --dry-run` (36 files; 62 before); installed `access-gate-client` 0.0.9, `seal-client` 0.0.20,
-  `walrus-client` 0.0.28, `nft-gate-client` 0.0.17, `wallet-adapter` 0.0.17, `@mysten/sui` 2.36.0; protocol
-  text read against `nft-gate` 0.0.22 (`gateway-workers`, `gateway-rust`) and `nft-gate-client` 0.0.17.
+  `npm pack --dry-run` (36 files; 62 before); installed `access-gate-client` 0.0.9, `sealed-storage-client` 0.0.20,
+  `walrus-storage-client` 0.0.28, `access-gate-gateway-client` 0.0.17, `wallet-adapter` 0.0.17, `@mysten/sui` 2.36.0; protocol
+  text read against `nft-gate` 0.0.22 (`gateway-workers`, `gateway-rust`) and `access-gate-gateway-client` 0.0.17.
   Live probes of 2026-10-09/10 (headers, `/THIRD_PARTY_LICENSES`, deep links, the 404 page, the testnet ids of
   `dev.meddleware.co.uk`) were not repeated. Earlier (2026-10-09): `npm pack --dry-run` (62 files) and the
   published 0.0.22 tarball (44 files) listed.
@@ -110,14 +110,14 @@ Critical / High / Medium / Low / Info / Positive.
 **Issue / impact:** `await fetch(walrusBlobUrl(…))` has no timeout, no size limit and no
 `strict_consistency_check`; readers copying it inherit an unbounded read of attacker-chosen blobs.
 **Remediation / evidence:** both samples use `readBlob(blobId, { aggregator:
-WALRUS_AGGREGATOR_HOSTS.testnet })` from `@meddleware/walrus-client/http` (walrus-client F10), and
+WALRUS_AGGREGATOR_HOSTS.testnet })` from `@meddleware/walrus-storage-client/http` (walrus-storage-client F10), and
 keep `walrusBlobUrl` only for links and `<img src>`. Re-checked 2026-10-09: the only `readBlob` uses are in
 those two pages and the only bare `fetch` left is the gateway call in the access-proof sample.
 
 ### F2 — SPA fallback on a multi-page site
 
 **Severity:** Low   **Disposition:** RESOLVED (0.0.17; static-server 0.1.4)
-**Where:** `Dockerfile`, `post-bootstrap/dev/base/deployment.yaml`
+**Where:** `Dockerfile`, `post-bootstrap/dev-site/base/deployment.yaml`
 **Issue / impact:** as docs F11 — clean URLs were answered with the home page, and unknown paths
 (e.g. the `/sui/dao/` and `/treasury/` links two apps carried) returned 200.
 **Remediation / evidence:** `CLEAN_URLS=true`, `NOT_FOUND_PAGE=/404.html`, no SPA fallback; the
@@ -159,26 +159,26 @@ the generated pages (its ids are checked at build time, F6).
 object ids are literals in the table, although `SECURITY.md` invariant 1 says on-chain facts are "generated
 from the published packages on every build, never hand-typed", and the SITE lens requires the same. The
 values are correct today: they match `Published.toml` of `@meddleware/access-gate-sui` 0.0.6 and
-`seal-policies-sui` 0.0.7, the `deployments` exports of `access-gate-client` 0.0.8 and `seal-client`
+`sealed-storage-sui` 0.0.7, the `deployments` exports of `access-gate-client` 0.0.8 and `sealed-storage-client`
 0.0.19, and the live `/sui/` page (read 2026-10-10: only `0xd7ddaa94…`, `0x3f81489d…`, `0x0c8f7349…`,
-`0xee0403ba…`; no superseded id). The key-server ids match `seal-ui/src/config.ts`. Nothing detects
+`0xee0403ba…`; no superseded id). The key-server ids match `sealed-storage-ui/src/config.ts`. Nothing detects
 drift: 0.0.20 shipped without its id edits and 0.0.21 had to follow (CHANGELOG 0.0.21).
 **Impact:** after the next republication the table would show the previous package; a developer copying
 an id would call a superseded package. `SECURITY.md` overstates what the build guarantees.
 **Remediation / evidence:** 0.0.23 adds `scripts/check-onchain-ids.mjs`, run by `npm run build` before
-VitePress, with `access-gate-client` and `seal-client` as dev dependencies. It loads `ACCESS_GATE_DEPLOYMENTS`
+VitePress, with `access-gate-client` and `sealed-storage-client` as dev dependencies. It loads `ACCESS_GATE_DEPLOYMENTS`
 and `SEAL_POLICIES_DEPLOYMENTS` from the installed clients (`…/deployments`; the clients ship TypeScript
 source, which the check transpiles with `typescript`) and fails the build when any hand-written page
 (everything under `docs/` except `audit/` and the generated `sui/onchain/` tree) carries a 32-byte `0x…` id
 that is neither a current testnet id of either deployment nor one of the three Seal key-server object ids
-allowlisted in the script (`OTHER_IDS`, the `seal-ui` defaults), or when `docs/sui/index.md` lacks one of the
+allowlisted in the script (`OTHER_IDS`, the `sealed-storage-ui` defaults), or when `docs/sui/index.md` lacks one of the
 four ids it must show (`access_gate` original id and `PlatformConfig`, `seal_policies` original id and
 `PolicyConfig`). It fails closed when a client or its record cannot be read. Pinned by
 `tests/check-onchain-ids.test.mjs` (superseded id, missing id, mixed case, ignored trees, key-server
 allowlist, short literals, missing page) and by a test that runs the check on this repository's real pages
 with the installed clients. The table stays typed (it carries prose); drift can no longer ship.
 `SECURITY.md` invariant 1 now says exactly that. Verified with the 0.0.23 lockfile (access-gate-client 0.0.9,
-seal-client 0.0.20): the page matches.
+sealed-storage-client 0.0.20): the page matches.
 
 ### F7 — Code samples no longer match the current client signatures
 
@@ -187,19 +187,19 @@ seal-client 0.0.20): the page matches.
 `docs/sui/walrus-storage/integration.md:18-35` (`createGatedAccess`) and `:57` (`createRelayAccessToken`);
 `docs/sui/sealed-storage/index.md:36-58` and `integration.md:6-25` (`SealController`, `encrypt`)
 **Issue:** every imported name exists in the installed packages (checked by script 2026-10-09:
-`access-gate-client` 0.0.8, `seal-client` 0.0.19, `walrus-client` 0.0.26, `nft-gate-client` 0.0.16, `ui`,
+`access-gate-client` 0.0.8, `sealed-storage-client` 0.0.19, `walrus-storage-client` 0.0.26, `access-gate-gateway-client` 0.0.16, `ui`,
 `design-tokens`; `useWallet` in `wallet-adapter`), but several call shapes are the pre-2026-10-08 ones:
-- `buildAccessProof({ address, challenge, sign })` — since nft-gate-client 0.0.16 (protocol v2) it also
+- `buildAccessProof({ address, challenge, sign })` — since access-gate-gateway-client 0.0.16 (protocol v2) it also
   requires `gateway`, `gateId` and `network` (the signed message binds them); the sample does not
   compile and would be refused at runtime.
-- `createGatedAccess({ … })` and `createRelayAccessToken({ … })` — walrus-client now requires `gateId` and
+- `createGatedAccess({ … })` and `createRelayAccessToken({ … })` — walrus-storage-client now requires `gateId` and
   `network` (signed into every proof).
 - the Seal sample builds `SealController` without `accessGateOriginalId`, so `encrypt('nft-gate', …)` does
   not read the gate, and the guide never says that sealing to a gate that mints **transferable** passes is
-  refused by default (seal-client 0.0.18; `allowTransferableGates` opts in): a holder can freeze or share
+  refused by default (sealed-storage-client 0.0.18; `allowTransferableGates` opts in): a holder can freeze or share
   such a pass and the content becomes effectively public. Sample and text teach sealing to any gate.
 - `parseSealedManifest(untrustedJson)` omits the registry argument that validates a manifest's `params`
-  at import (seal-client 0.0.17; optional, but the safer form).
+  at import (sealed-storage-client 0.0.17; optional, but the safer form).
 **Impact:** the realistic harm named in the severity ceiling: a developer copies a sample that does not
 run, or that seals content to a gate whose passes can be made public. No user funds are involved.
 **Remediation / evidence:** 0.0.23 edits the samples: `buildAccessProof` passes `gateway`, `gateId` and
@@ -228,7 +228,7 @@ self-test that a wrong call is reported at the right Markdown line. It runs in C
 **Severity:** Low   **Disposition:** RESOLVED (0.0.23; `gateway.md`, `index.md`, `relay-self-host.md`; commit `6de2998`)
 **Where:** `docs/sui/access-gate/gateway.md:28-31` and `:36-50`, `docs/sui/access-gate/index.md:35`
 **Issue:** the pages say the wallet signs `nft-gate:access:<nonce>` and list `GATE_ID` as optional. Since
-nft-gate 0.0.19 / nft-gate-client 0.0.16 the signed message is `nft-gate:access:v2`, multi-line, binding
+nft-gate 0.0.19 / access-gate-gateway-client 0.0.16 the signed message is `nft-gate:access:v2`, multi-line, binding
 the gateway origin, gate id, network, nonce and (single-use) consume digest, and the Workers gateway
 requires `GATE_ID`, `GATEWAY_ORIGIN` (a canonical https origin) and `NETWORK` (`gateway-workers/src/config.ts`
 `req(...)`). The responses table omits that `409` carries `code: redeemed | leased`. The Docker snippet
@@ -236,7 +236,7 @@ for the Rust gateway has the same gaps; that gateway is kept at parity but is no
 **Impact:** an operator following the guide deploys a gateway that refuses to start, or a client builds a
 v1 message that every v2 gateway rejects. Both fail closed.
 **Remediation / evidence:** `gateway.md` now states the `nft-gate:access:v2` message (origin, gate, network,
-nonce, consume digest) with a pointer to nft-gate-client's wire-protocol section and `vectors.json`, lists
+nonce, consume digest) with a pointer to access-gate-gateway-client's wire-protocol section and `vectors.json`, lists
 `GATEWAY_ORIGIN`, `NETWORK`, `NFT_TYPE` and `GATE_ID` as required (and `UPSTREAM_AUTH_HEADERS` as a JSON
 array, `ALLOWED_ORIGINS`), puts the three public values in the Workers `[vars]` step (no longer secrets),
 adds `GATEWAY_ORIGIN`, `NETWORK`, `GATE_ID` and `ALLOW_INSECURE_HTTP` (and the `REDIS_URL` requirement with
@@ -244,7 +244,7 @@ adds `GATEWAY_ORIGIN`, `NETWORK`, `GATE_ID` and `ALLOW_INSECURE_HTTP` (and the `
 implementations' complete configuration tables; `access-gate/index.md` names the v2 message in the concepts
 table; `relay-self-host.md` adds the same settings and the JSON header format; `integration.md` explains why
 `buildAccessProof` needs the gateway, gate and network. Read against `nft-gate` 0.0.22 `gateway-workers`
-(`wrangler.toml`, `src/config.ts`, README) and `gateway-rust` README, and `nft-gate-client` 0.0.17.
+(`wrangler.toml`, `src/config.ts`, README) and `gateway-rust` README, and `access-gate-gateway-client` 0.0.17.
 The table is version-stamped in the page ("checked against nft-gate 0.0.22") and sends readers to the
 READMEs for the complete reference, which closes the pre-mainnet "API/flag/env pages version-stamped"
 gate; the samples that build the proof are type-checked (F7).
@@ -294,7 +294,7 @@ in `tests/`: the on-chain id check F6, the sample type-check F7, the package con
 ### F11 — Image release gate, scan, notices and runtime user
 
 **Severity:** Low   **Disposition:** RESOLVED (0.0.20 `439bfed`, 0.0.22 `22e82bb`)
-**Where:** `.github/workflows/docker-publish.yml`, `Dockerfile`, `scripts/third-party-licenses.mjs`, `post-bootstrap/dev/base/deployment.yaml`
+**Where:** `.github/workflows/docker-publish.yml`, `Dockerfile`, `scripts/third-party-licenses.mjs`, `post-bootstrap/dev-site/base/deployment.yaml`
 **Issue:** the image release was gated by a subset of CI, the published image was not scanned before
 signing, the lockfile was not in the image (the SBOM saw only the base), no third-party licence texts were
 served with the bundled npm code, and the runtime user was only inherited from the base.
@@ -315,16 +315,16 @@ scan runs at release).
 ### F12 — The template dependency range does not name the resolved version
 
 **Severity:** Info   **Disposition:** RESOLVED (0.0.23; `package.json`; commit `6de2998`)
-**Where:** `package.json` (`@meddleware/sui-token-template ^1.0.7`)
+**Where:** `package.json` (`@meddleware/token-issuance-template-sui ^1.0.7`)
 **Issue:** the range resolves to 1.0.8 (the latest published; lockfile and `npm ls` 2026-10-09), which the
 on-chain pages need (supply and metadata policies applied in the coin's `init`), but the manifest does not
 say so. Every other first-party range is at its latest published version (access-gate-sui `^0.0.6`,
-seal-policies-sui `^0.0.7`, ui `^0.1.31`, design-tokens `^0.1.9`).
+sealed-storage-sui `^0.0.7`, ui `^0.1.31`, design-tokens `^0.1.9`).
 **Impact:** a lockfile regeneration could resolve either version; documentation accuracy only.
-**Remediation / evidence:** `@meddleware/sui-token-template` is `^1.0.9` (the latest published, 2026-10-18)
+**Remediation / evidence:** `@meddleware/token-issuance-template-sui` is `^1.0.9` (the latest published, 2026-10-18)
 and the lockfile resolves 1.0.9, so the range names the version the on-chain pages were generated from. The
 other first-party ranges are at their latest (`design-tokens ^0.1.10`, `ui ^0.1.31`, `access-gate-sui ^0.0.6`,
-`seal-policies-sui ^0.0.7`, clients as listed in B.1).
+`sealed-storage-sui ^0.0.7`, clients as listed in B.1).
 
 ### F13 — `connect-src` allows any https origin
 
@@ -346,7 +346,7 @@ fix without that probe).
 
 **Severity:** Info   **Disposition:** RESOLVED (2026-10-18, workspace `verify-digests.sh` default; was ACCEPTED-RISK)
 **Where:** `bootstrap/images/verify-digests.sh` (workspace); this repository publishes no verify command
-**Issue:** the cluster check accepted any workflow identity of `github.com/meddleware-org/dev`.
+**Issue:** the cluster check accepted any workflow identity of `github.com/meddleware-org/dev-site`.
 **Impact:** a workflow added by someone with write access could have signed an image the check would accept.
 **Remediation / evidence:** fixed in the workspace script on 2026-10-18: the default identity in
 `bootstrap/images/verify-digests.sh` is now `^https://github\.com/meddleware-org/${name}/\.github/workflows/docker-publish\.yml@refs/tags/v`
@@ -409,7 +409,7 @@ type-check and the audit never reaching `dist/` or the package.
 | I6 | Generated pages from pinned inputs | `gen-onchain.mjs` | lockfile | HOLDS (F5) |
 | I7 | On-chain ids shown to readers equal the recorded deployment | `scripts/check-onchain-ids.mjs` in `build` (typed ids in `docs/sui/index.md`, the Seal key-server ids allowlisted) | `tests/check-onchain-ids.test.mjs`, the real pages checked against the installed clients' `deployments` in the build and the tests | HOLDS (F6) |
 | I8 | Samples call the current client signatures | `tests/samples.test.mjs` (every fenced `ts` block compiled against the installed packages) | CI and both release gates | HOLDS (F7) |
-| I9 | The gateway guide matches the deployed protocol and configuration | content, version-stamped table | read against nft-gate-client 0.0.17 and nft-gate 0.0.22 (`gateway-workers`, `gateway-rust`) on 2026-10-18; the proof-building samples are type-checked | HOLDS (F8) |
+| I9 | The gateway guide matches the deployed protocol and configuration | content, version-stamped table | read against access-gate-gateway-client 0.0.17 and nft-gate 0.0.22 (`gateway-workers`, `gateway-rust`) on 2026-10-18; the proof-building samples are type-checked | HOLDS (F8) |
 | I10 | Drafts and the audit file are absent from every published artefact | `drafts/` outside `srcDir`, `srcExclude` (site); `files` negations (npm); `check-dist-no-audit.mjs` (build output) | `tests/package-contents.test.mjs` (`npm pack --dry-run`: 36 files); live `/audit/dev-audit` 404 (2026-10-10) | HOLDS (F9) |
 | I11 | The unit tests run on every change and every release | `node-ci.yml` `npm test`; both release workflows call `node-ci.yml` | workflows read 2026-10-18 | HOLDS (F10, F16) |
 | I12 | The release ships only what full CI accepted, scanned and signed | `docker-publish.yml` `verify` → `node-ci.yml`; Trivy before cosign | workflow read 2026-10-09 | HOLDS (F11) |
@@ -442,9 +442,9 @@ type-check and the audit never reaching `dist/` or the package.
 | --- | --- | --- | --- | --- |
 | `vitepress` | 2.0.0-alpha.20 (lockfile) | build only | clean | pre-release; the CSP check fails the build when its inline scripts change |
 | `vitest` | `~5.0.5` | tests only | clean | dev |
-| `@meddleware/access-gate-sui`, `seal-policies-sui`, `sui-token-template` | `^0.0.6`, `^0.0.7`, `^1.0.9` (all latest, 2026-10-18) | build only | clean | on-chain pages; F12 |
+| `@meddleware/access-gate-sui`, `sealed-storage-sui`, `token-issuance-template-sui` | `^0.0.6`, `^0.0.7`, `^1.0.9` (all latest, 2026-10-18) | build only | clean | on-chain pages; F12 |
 | `@meddleware/ui`, `design-tokens` | `^0.1.31`, `^0.1.10` (latest) | theme | clean | |
-| `@meddleware/*` clients, `@mysten/*` | access-gate-client `^0.0.9`, seal-client `^0.0.20`, nft-gate-client `^0.0.17`, walrus-client `^0.0.28`, wallet-adapter `^0.0.17`; `@mysten/sui ^2.36.0`, `seal ^1.5.0`, `walrus ~1.2.35` (all dev dependencies) | tests and the id check only | clean | not shipped in the site; they are what the samples are compiled against (F6, F7) |
+| `@meddleware/*` clients, `@mysten/*` | access-gate-client `^0.0.9`, sealed-storage-client `^0.0.20`, access-gate-gateway-client `^0.0.17`, walrus-storage-client `^0.0.28`, wallet-adapter `^0.0.17`; `@mysten/sui ^2.36.0`, `seal ^1.5.0`, `walrus ~1.2.35` (all dev dependencies) | tests and the id check only | clean | not shipped in the site; they are what the samples are compiled against (F6, F7) |
 | Link checker | lychee-action pinned by SHA | none | — | CI only |
 | `node:24-slim` / `static-server` | digest-pinned / 0.1.8 (0.0.23, deployed 2026-10-18; 0.0.22 was on 0.1.7) | build / runtime | Trivy at release (F11); Go 1.26.9 (0.1.7) | — |
 | dev tooling | lockfile | no | GHSA-vfj7-8cjw-p6xm allowlisted to 2027-01-01 | TS lens B.TS-3 |
@@ -502,8 +502,8 @@ VitePress emits no source maps for the production build; the deployment is read-
 | Input | Version / pin | Used for |
 | --- | --- | --- |
 | vitepress | 2.0.0-alpha.20 (lockfile) | site build |
-| access-gate-sui, seal-policies-sui, sui-token-template | 0.0.6, 0.0.7, 1.0.9 (lockfile) | `gen-onchain.mjs` |
-| access-gate-client, seal-client | 0.0.9, 0.0.20 (lockfile) | `check-onchain-ids.mjs` (the `deployments` records) |
+| access-gate-sui, sealed-storage-sui, token-issuance-template-sui | 0.0.6, 0.0.7, 1.0.9 (lockfile) | `gen-onchain.mjs` |
+| access-gate-client, sealed-storage-client | 0.0.9, 0.0.20 (lockfile) | `check-onchain-ids.mjs` (the `deployments` records) |
 | lychee | `lycheeverse/lychee-action` v2.9.0 (SHA) | external-link check |
 
 Latest-ID rule: the generated pages and the typed table (checked against the clients, F6) show a package id that is both published-at and
@@ -546,8 +546,8 @@ production build and the generator run from a clean checkout in CI. Not covered:
 - [x] 0.0.23 deployed by digest (2026-10-18; 0.0.22 on 2026-10-09); live probe of a deep link and an unknown path, headers and `/THIRD_PARTY_LICENSES` (2026-10-10 on 0.0.22; on 0.0.23 on 2026-10-18: `/` 200, `/sui/` 200, an unknown path 404, `/THIRD_PARTY_LICENSES` 200, headers present)
 - [x] inline scripts hash-covered and checked at build time (`check-csp-inline.mjs`, 29 pages); link check in CI (F3)
 - [x] image: digest-pinned bases, non-root, restricted pod, probes and limits, signed with SBOM and provenance, scanned before signing (F11)
-- [x] on-chain facts checked against the canonical record — `check-onchain-ids.mjs` in `build`, the `deployments` of access-gate-client 0.0.9 and seal-client 0.0.20, `tests/check-onchain-ids.test.mjs` (F6, 0.0.23, 2026-10-18)
-- [x] samples match the current client signatures; gateway guide matches protocol v2 — every `ts` sample type-checked (`tests/samples.test.mjs`); `gateway.md` read against nft-gate 0.0.22 and nft-gate-client 0.0.17 (F7, F8, 0.0.23, 2026-10-18)
+- [x] on-chain facts checked against the canonical record — `check-onchain-ids.mjs` in `build`, the `deployments` of access-gate-client 0.0.9 and sealed-storage-client 0.0.20, `tests/check-onchain-ids.test.mjs` (F6, 0.0.23, 2026-10-18)
+- [x] samples match the current client signatures; gateway guide matches protocol v2 — every `ts` sample type-checked (`tests/samples.test.mjs`); `gateway.md` read against nft-gate 0.0.22 and access-gate-gateway-client 0.0.17 (F7, F8, 0.0.23, 2026-10-18)
 - [x] every test project runs in CI — `npm test` in `node-ci.yml`, called by both release workflows (F10, F16, 0.0.23, 2026-10-18)
 - [x] the audit file and generated pages are excluded from the npm package — `files` negations, `npm pack --dry-run` 36 files, `tests/package-contents.test.mjs`, `check-dist-no-audit.mjs` (F9, 0.0.23, 2026-10-18)
 
@@ -567,14 +567,14 @@ production build and the generator run from a clean checkout in CI. Not covered:
 - **Supply chain & release integrity** — lockfile (also shipped in the image); first-party libraries at
   their latest versions (F12); signed images with SBOM and provenance, Trivy
   before signing, SHA-pinned actions, grouped Dependabot; expiring audit allowlist; publish authority in B.2.
-- **Wire-format coupling** — the gateway proof message is defined in nft-gate-client and pinned by its
+- **Wire-format coupling** — the gateway proof message is defined in access-gate-gateway-client and pinned by its
   `vectors.json`; this site restates it in prose (version-stamped, F8) and compiles the proof-building samples against the
   client (F7).
 - **On-chain-truth boundary** — the guides state no accounting; fees and terms come from the generated
   on-chain pages; the typed ids are checked at build time (F6).
 - **Deployment readiness** — Section D.
-- **Chain-access layering** — the guides teach the layered clients (`access-gate-client`, `seal-client`,
-  `walrus-client`); ids shown are the latest on-chain version, checked against the clients (F6).
+- **Chain-access layering** — the guides teach the layered clients (`access-gate-client`, `sealed-storage-client`,
+  `walrus-storage-client`); ids shown are the latest on-chain version, checked against the clients (F6).
 
 ## Normative requirements (MUST / MUST NOT)
 
@@ -624,7 +624,7 @@ None.
   nothing is skipped today; DEFERRED), F11 (release gate, Trivy, lockfile, notices, `USER 65534`;
   RESOLVED 0.0.20–0.0.22), F12 (template range; DEFERRED), F13 (blanket `connect-src`; ACCEPTED-RISK),
   F14 (cosign identity; ACCEPTED-RISK), F15 (mirror and credentials; DEFERRED, maintainer), F16 (npm gate
-  subset; ACCEPTED-RISK), F17 (contributor documents; DEFERRED). Verified: sui-token-template resolves
+  subset; ACCEPTED-RISK), F17 (contributor documents; DEFERRED). Verified: token-issuance-template-sui resolves
   1.0.8 in the lockfile; the live `/sui/` page shows only the new ids; CSP hash check over 29 pages; audit
   gate 1 allowlisted / 0 open. Section D ticked with evidence; unticked: the next-patch items and the
   mainnet/maintainer items.
@@ -632,9 +632,9 @@ None.
   signatures; every `ts` sample type-checked in CI; four further sample defects found by it and fixed),
   F8 (gateway guide and relay self-host guide describe protocol v2 and the required variables), F9 (`files`
   negations, `check-dist-no-audit.mjs`; the dry run also showed 17 VitePress cache files, now excluded; 62 to
-  36 files), F10 (`npm test` in CI), F12 (`sui-token-template ^1.0.9`), F16 (the npm `verify` calls
-  `node-ci.yml`), F17 (`CLAUDE.md`, `SECURITY.md`) RESOLVED. Dependencies moved to the latest (walrus-client
-  0.0.28, sui-token-template 1.0.9, nft-gate-client 0.0.17, seal-client 0.0.20, access-gate-client 0.0.9,
+  36 files), F10 (`npm test` in CI), F12 (`token-issuance-template-sui ^1.0.9`), F16 (the npm `verify` calls
+  `node-ci.yml`), F17 (`CLAUDE.md`, `SECURITY.md`) RESOLVED. Dependencies moved to the latest (walrus-storage-client
+  0.0.28, token-issuance-template-sui 1.0.9, access-gate-gateway-client 0.0.17, sealed-storage-client 0.0.20, access-gate-client 0.0.9,
   design-tokens 0.1.10, tooling), the clients and `@mysten/*` added as dev dependencies; image base
   static-server 0.1.8 (`sha256:e32cf42b…4000`, tag verified on quay.io). F13 and F14 stay ACCEPTED-RISK (no
   single safe fix without a browser probe or a workspace-script change); F15 stays DEFERRED (maintainer).
@@ -657,3 +657,4 @@ None.
   - **Done:** the Dockerfile `CSP` argument has `connect-src 'self'`; the comment above it says why; `tests/csp.test.mjs` pins it; CHANGELOG 0.0.26 (and the missing 0.0.25 entry, the static-server 0.1.11 base). The browser probe is in F13 (search returned 16 results, no violations, a control request blocked).
   - **Measured:** type-check, lint, vitest (21 tests, 4 files; the new test red before the change), build and the audit gate pass. `img-src ... https:` is unchanged.
   - **Not verified:** the deployed header after release (read it with `curl -sI https://dev.meddleware.co.uk/` once 0.0.26 is deployed).
+- 2026-10-24 — repository renamed from `dev` to `dev-site` (workspace naming convention, `docs/architecture/ADR-0003-naming.md`): package, image, host and path names updated throughout. No finding, disposition or evidence changed.

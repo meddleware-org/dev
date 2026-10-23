@@ -93,6 +93,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.27] - 2026-10-24
+
+### Changed
+
+- Renamed from `dev` to `dev-site` (workspace naming convention, `docs/architecture/ADR-0003-naming.md`). No code change beyond names, paths, hostnames and dependency names; the history below keeps the old names.
+
 ## [0.0.25] - 2026-10-22
 
 ### Changed

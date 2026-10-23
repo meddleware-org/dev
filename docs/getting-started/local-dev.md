@@ -5,11 +5,11 @@
 Each app has a local dev server:
 
 ```bash
-git clone https://github.com/meddleware-org/walrus-ui.git
-cd walrus-ui && npm install && npm run dev    # http://localhost:5173
+git clone https://github.com/meddleware-org/walrus-storage-ui.git
+cd walrus-storage-ui && npm install && npm run dev    # http://localhost:5173
 ```
 
-The same applies to `seal-ui`, `access-gate-ui` and `token-deployer-ui`.
+The same applies to `sealed-storage-ui`, `access-gate-ui` and `token-issuance-ui`.
 
 All apps read environment variables from `.env.local` (git-ignored). Copy the example file to get started:
 
@@ -21,7 +21,7 @@ cp .env.example .env.local
 ## Running this docs site locally
 
 ```bash
-git clone https://github.com/meddleware-org/dev.git
+git clone https://github.com/meddleware-org/dev-site.git
 cd dev
 npm install
 npm run dev   # http://localhost:5173
@@ -30,7 +30,7 @@ npm run dev   # http://localhost:5173
 For the user-facing docs site:
 
 ```bash
-git clone https://github.com/meddleware-org/docs.git
+git clone https://github.com/meddleware-org/docs-site.git
 cd docs
 npm install
 npm run dev   # gen:api runs first (requires @meddleware/* SDK packages published)
@@ -46,7 +46,7 @@ Common variables shared across apps:
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `VITE_NETWORK` | `testnet` | `testnet` \| `mainnet` (the token deployer also accepts `localnet`) |
+| `VITE_NETWORK` | `testnet` | `testnet` \| `mainnet` (the token issuance also accepts `localnet`) |
 | `VITE_DOCS_URL` | `https://docs.meddleware.co.uk` | User docs base URL |
 | `VITE_DEV_URL` | `https://dev.meddleware.co.uk` | Developer docs base URL |
 | `VITE_RPC_TESTNET` / `VITE_RPC_MAINNET` | public Mysten fullnodes | gRPC-web endpoint overrides |
@@ -60,9 +60,9 @@ never secret.
 To build and run any service as a Docker image (requires Docker Desktop or similar):
 
 ```bash
-cd walrus-ui
-docker build -t walrus-ui:dev .
-docker run -p 8080:8080 walrus-ui:dev
+cd walrus-storage-ui
+docker build -t walrus-storage-ui:dev .
+docker run -p 8080:8080 walrus-storage-ui:dev
 ```
 
 The `SPA_FALLBACK=true` env var is baked in — the static-server handles client-side routing.

@@ -111,7 +111,7 @@ describe('wrapSample', () => {
 describe('the checker', () => {
   it('reports a wrong call, naming the Markdown line', () => {
     const problems = checkSamples([
-      { name: 'x.md', line: 10, path: join(root, '__sample_bad.ts'), source: wrapSample("import { buildAccessProof } from '@meddleware/nft-gate-client'\nawait buildAccessProof({ address: 'a' })") },
+      { name: 'x.md', line: 10, path: join(root, '__sample_bad.ts'), source: wrapSample("import { buildAccessProof } from '@meddleware/access-gate-gateway-client'\nawait buildAccessProof({ address: 'a' })") },
     ])
     expect(problems.some((p) => p.startsWith('x.md:11:'))).toBe(true)
   })

@@ -12,15 +12,15 @@ Two packages:
 - [`@meddleware/access-gate-client`](https://www.npmjs.com/package/@meddleware/access-gate-client)
   — the `access_gate` client: typed reads, typed events, transaction builders, abort messages and
   the deployed ids per network.
-- [`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) — the
+- [`@meddleware/access-gate-gateway-client`](https://www.npmjs.com/package/@meddleware/access-gate-gateway-client) — the
   gateway wire protocol: fetch a challenge and build the access proof an
-  [nft-gate gateway](./gateway) verifies.
+  [access-gate gateway](./gateway) verifies.
 
 ## Install
 
 ```bash
 npm install @meddleware/access-gate-client @mysten/sui
-npm install @meddleware/nft-gate-client   # only to prove access to a gateway
+npm install @meddleware/access-gate-gateway-client   # only to prove access to a gateway
 ```
 
 ## Key concepts

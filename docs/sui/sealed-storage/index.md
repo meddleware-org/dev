@@ -7,7 +7,7 @@ encryption and stores the ciphertext on Walrus. A Seal key server releases its k
 on-chain policy (`seal_policies::<module>::seal_approve*`) succeeds in a dry run with the requester
 as sender, so only addresses that satisfy the policy can decrypt.
 
-[`@meddleware/seal-client`](https://www.npmjs.com/package/@meddleware/seal-client) is the client half:
+[`@meddleware/sealed-storage-client`](https://www.npmjs.com/package/@meddleware/sealed-storage-client) is the client half:
 
 - **Policy providers** — one per Move policy module. Each builds the Seal identity for new content
   and the approve call for decryption. Built in: `nft-gate` (holders of an access-gate pass) and
@@ -20,7 +20,7 @@ as sender, so only addresses that satisfy the policy can decrypt.
 ## Install
 
 ```bash
-npm install @meddleware/seal-client @mysten/seal @mysten/sui
+npm install @meddleware/sealed-storage-client @mysten/seal @mysten/sui
 ```
 
 `@mysten/seal` and `@mysten/sui` are peer dependencies.
@@ -29,9 +29,9 @@ npm install @meddleware/seal-client @mysten/seal @mysten/sui
 
 ```ts
 import { SuiGrpcClient } from '@mysten/sui/grpc'
-import { createDefaultRegistry } from '@meddleware/seal-client'
-import { SealController } from '@meddleware/seal-client/controller' // also on the main entry; the subpath lets apps lazy-load @mysten/seal
-import { sealPoliciesDeployment } from '@meddleware/seal-client/deployments'
+import { createDefaultRegistry } from '@meddleware/sealed-storage-client'
+import { SealController } from '@meddleware/sealed-storage-client/controller' // also on the main entry; the subpath lets apps lazy-load @mysten/seal
+import { sealPoliciesDeployment } from '@meddleware/sealed-storage-client/deployments'
 import { accessGateDeployment } from '@meddleware/access-gate-client/deployments'
 
 const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://fullnode.testnet.sui.io:443' })
@@ -74,7 +74,7 @@ public. Seal to a soulbound gate, and leave `accessGateOriginalId` unset only if
 yourself: without it the controller does not read the gate.
 :::
 
-These are the committee defaults `seal-ui` uses on testnet. On mainnet the Mysten committee
+These are the committee defaults `sealed-storage-ui` uses on testnet. On mainnet the Mysten committee
 aggregator requires an API key; see the Seal docs.
 
 ## The flow

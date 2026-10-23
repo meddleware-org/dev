@@ -2,7 +2,7 @@
 
 Seal access policies are **Move functions**, not objects: a Seal key server releases a key share only
 if the policy's `seal_approve*` entry function **succeeds in a dry run** with the requester as sender.
-The `seal_policies` package (`seal-policies-sui`) ships the built-in policies; its on-chain reference
+The `seal_policies` package (`sealed-storage-sui`) ships the built-in policies; its on-chain reference
 is maintained with the package and imported into this site:
 
 - [On-chain overview](/sui/onchain/sealed-storage/overview)
@@ -25,13 +25,13 @@ aborts unless it names the current package version, so an upgrade can retire old
 key server at once. The client passes it for you.
 
 There is nothing to create or deploy per policy: you encrypt under an identity with
-`@meddleware/seal-client`, and at decryption time the client builds the approve transaction for the
+`@meddleware/sealed-storage-client`, and at decryption time the client builds the approve transaction for the
 key servers.
 
 ## Writing a custom policy
 
 A new policy is a **new module** (existing modules are never edited) exposing its own
-`seal_approve*` entry function, plus a matching provider in `@meddleware/seal-client`:
+`seal_approve*` entry function, plus a matching provider in `@meddleware/sealed-storage-client`:
 
 ```move
 module my_policies::allowlist;

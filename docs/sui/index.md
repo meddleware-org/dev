@@ -10,7 +10,7 @@ Guides for building on Meddleware's Sui Move packages, TypeScript SDKs and hoste
 | [PTB patterns](./ptb-patterns) | Building, simulating and executing transactions; handling aborts |
 | [Walrus Storage](./walrus-storage/) | Upload and manage Walrus blobs; the NFT-gated upload relay |
 | [Sealed Storage](./sealed-storage/) | Encrypt to on-chain Seal policies; store ciphertext on Walrus |
-| [Access Gate](./access-gate/) | Sell and verify NFT access passes; deploy the nft-gate gateway |
+| [Access Gate](./access-gate/) | Sell and verify NFT access passes; deploy the access-gate gateway |
 
 ## Contract layout
 
@@ -21,8 +21,8 @@ functions, events, abort codes) is maintained with the package and imported into
 | Repository | Move package | Modules | Depends on | On-chain docs |
 | --- | --- | --- | --- | --- |
 | [`access-gate-sui`](https://github.com/meddleware-org/access-gate-sui) | `access_gate` | `access_gate` — gates, passes (`AccessNFT` / `SoulboundAccessNFT`), purchase with platform commission, single-use `consume`, gate policies | Sui framework only | [overview](/sui/onchain/access-gate/overview) · [dev guide](/sui/onchain/access-gate/dev-guide) · [API](/sui/onchain/access-gate/api-reference) |
-| [`seal-policies-sui`](https://github.com/meddleware-org/seal-policies-sui) | `seal_policies` | `nft_gate` and `timelock` (Seal `seal_approve*` policies); `sealed_content` (discovery registry, not a policy) | `access_gate` (git, commit-pinned) | [overview](/sui/onchain/sealed-storage/overview) · [dev guide](/sui/onchain/sealed-storage/dev-guide) · [API](/sui/onchain/sealed-storage/api-reference) |
-| [`sui-token-template`](https://github.com/meddleware-org/sui-token-template) | `sui_token_template` | `sui_token_template` — one coin per publish via the coin registry | Sui framework only | [overview](/sui/onchain/token-deployer/overview) · [dev guide](/sui/onchain/token-deployer/dev-guide) · [API](/sui/onchain/token-deployer/api-reference) |
+| [`sealed-storage-sui`](https://github.com/meddleware-org/sealed-storage-sui) | `seal_policies` | `nft_gate` and `timelock` (Seal `seal_approve*` policies); `sealed_content` (discovery registry, not a policy) | `access_gate` (git, commit-pinned) | [overview](/sui/onchain/sealed-storage/overview) · [dev guide](/sui/onchain/sealed-storage/dev-guide) · [API](/sui/onchain/sealed-storage/api-reference) |
+| [`token-issuance-template-sui`](https://github.com/meddleware-org/token-issuance-template-sui) | `sui_token_template` | `sui_token_template` — one coin per publish via the coin registry | Sui framework only | [overview](/sui/onchain/token-issuance/overview) · [dev guide](/sui/onchain/token-issuance/dev-guide) · [API](/sui/onchain/token-issuance/api-reference) |
 
 ```text
 access_gate            ← passes, gates, commission (PlatformConfig)
@@ -30,7 +30,7 @@ access_gate            ← passes, gates, commission (PlatformConfig)
    └── seal_policies   ← nft_gate reads a Gate + pass; timelock reads Clock 0x6
 
 sui_token_template     ← not a shared deployment: each token is its own package,
-                         published from the user's wallet by the token deployer
+                         published from the user's wallet by the token issuance
 ```
 
 ### Testnet deployments
@@ -44,7 +44,7 @@ Type strings, event filters and Seal identities use the original ID; Move calls 
 published-at. Every gated call also passes the package's shared version object (`PlatformConfig`,
 `PolicyConfig`): it names the only package version allowed to act, so an upgrade can retire old code
 everywhere at once. All of these are exported by the client packages
-(`@meddleware/access-gate-client/deployments`, `@meddleware/seal-client/deployments`), generated from
+(`@meddleware/access-gate-client/deployments`, `@meddleware/sealed-storage-client/deployments`), generated from
 each package's `Published.toml` and `deployments.json`.
 
 Mainnet: not yet published. A compatible upgrade keeps the original ID, so existing gates, passes and
@@ -69,11 +69,11 @@ the same commission on airdrops. The terms live in `PlatformConfig` — see the
 | Package | Purpose |
 | --- | --- |
 | [`@meddleware/access-gate-client`](https://www.npmjs.com/package/@meddleware/access-gate-client) | `access_gate` client: pass/gate/platform reads, typed events, transaction builders (create, purchase, consume, admin), abort messages, deployed ids per network (`/deployments`) |
-| [`@meddleware/nft-gate-client`](https://www.npmjs.com/package/@meddleware/nft-gate-client) | Gateway wire protocol: challenge + access proof (no dependencies) |
-| [`@meddleware/seal-client`](https://www.npmjs.com/package/@meddleware/seal-client) | `SealController` (threshold encrypt/decrypt, session keys), policy registry with `nft-gate` and `time-lock` providers, `sealed_content` pointers and listing, deployed ids (`/deployments`) |
-| [`@meddleware/walrus-client`](https://www.npmjs.com/package/@meddleware/walrus-client) | Walrus client factory, upload flows, lifetime extension, attributes, owned-blob queries, relay access tokens; the upload orchestrator (`/flow`) and an HTTP publisher/aggregator client (`/http`) |
+| [`@meddleware/access-gate-gateway-client`](https://www.npmjs.com/package/@meddleware/access-gate-gateway-client) | Gateway wire protocol: challenge + access proof (no dependencies) |
+| [`@meddleware/sealed-storage-client`](https://www.npmjs.com/package/@meddleware/sealed-storage-client) | `SealController` (threshold encrypt/decrypt, session keys), policy registry with `nft-gate` and `time-lock` providers, `sealed_content` pointers and listing, deployed ids (`/deployments`) |
+| [`@meddleware/walrus-storage-client`](https://www.npmjs.com/package/@meddleware/walrus-storage-client) | Walrus client factory, upload flows, lifetime extension, attributes, owned-blob queries, relay access tokens; the upload orchestrator (`/flow`) and an HTTP publisher/aggregator client (`/http`) |
 | [`@meddleware/wallet-adapter`](https://www.npmjs.com/package/@meddleware/wallet-adapter) | Vue 3 wallet-standard composable shared across tool views: connect, sign messages, execute PTBs |
-| [`@meddleware/walrus-relay`](https://www.npmjs.com/package/@meddleware/walrus-relay) | Vue 3 UI for the upload relay: relay selection, tip estimate, NFT-gate access, upload widget |
+| [`@meddleware/walrus-storage-kit`](https://www.npmjs.com/package/@meddleware/walrus-storage-kit) | Vue 3 UI for the upload relay: relay selection, tip estimate, NFT-gate access, upload widget |
 | [`@meddleware/ui`](https://www.npmjs.com/package/@meddleware/ui) / [`@meddleware/design-tokens`](https://www.npmjs.com/package/@meddleware/design-tokens) | Components and tokens — see the [design system](/design-system/) |
 
 All SDKs target `@mysten/sui` v2 and gRPC (public fullnodes no longer serve JSON-RPC).
@@ -82,8 +82,8 @@ All SDKs target `@mysten/sui` v2 and gRPC (public fullnodes no longer serve JSON
 
 | Service | Source | Hosted instance |
 | --- | --- | --- |
-| nft-gate gateway (NFT-gated reverse proxy; Cloudflare Workers or Rust) | [`nft-gate`](https://github.com/meddleware-org/nft-gate) | in front of the Walrus relay |
-| Walrus upload relay (Mysten `walrus-upload-relay`, tip-charging) | upstream binary | `https://sui-walrus-relay-testnet.meddleware.co.uk` (via the gateway; `/v1/tip-config` is public) |
+| access-gate gateway (NFT-gated reverse proxy; Cloudflare Workers or Rust) | [`nft-gate`](https://github.com/meddleware-org/access-gate-gateway) | in front of the Walrus relay |
+| Walrus upload relay (Mysten `walrus-upload-relay`, tip-charging) | upstream binary | `https://sui-walrus-storage-relay-testnet.meddleware.co.uk` (via the gateway; `/v1/tip-config` is public) |
 
 ## Testnet vs mainnet
 

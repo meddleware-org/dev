@@ -9,8 +9,8 @@ env:
 
 # VitePress developer documentation site.
 # Publishes both:
-#   - @meddleware/dev to npmjs (OIDC trusted publishing, NPM_PUBLISH opt-in gate)
-#   - quay.io/meddleware-org/dev Docker image (multi-arch, cosign, provenance)
+#   - @meddleware/dev-site to npmjs (OIDC trusted publishing, NPM_PUBLISH opt-in gate)
+#   - quay.io/meddleware-org/dev-site Docker image (multi-arch, cosign, provenance)
 # No VITE_* build args — the dev site has no per-network build config.
 permissions:
   contents: read

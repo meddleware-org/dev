@@ -6,20 +6,20 @@ that signs and executes a `Transaction` (in a Vue app: `buildExecutor()` from
 
 ## Uploading through the NFT-gated relay
 
-Meddleware's relay, `https://sui-walrus-relay-testnet.meddleware.co.uk`, is the Mysten
-`walrus-upload-relay` behind an [nft-gate gateway](/sui/access-gate/gateway). Uploads need a
+Meddleware's relay, `https://sui-walrus-storage-relay-testnet.meddleware.co.uk`, is the Mysten
+`walrus-upload-relay` behind an [access-gate gateway](/sui/access-gate/gateway). Uploads need a
 wallet-signed access proof; `GET /v1/tip-config` is public.
 
 The testnet gateway runs in **single-use** mode: each upload spends one use of an access pass, so
 the proof must carry the digest of an on-chain `consume` bound to the gateway's challenge nonce.
-`@meddleware/walrus-client/flow` runs the whole upload, including that step:
+`@meddleware/walrus-storage-client/flow` runs the whole upload, including that step:
 
 ```ts
 import type { Transaction } from '@mysten/sui/transactions'
-import { consumeStorageKey, createGatedAccess, runBlobUpload } from '@meddleware/walrus-client/flow'
+import { consumeStorageKey, createGatedAccess, runBlobUpload } from '@meddleware/walrus-storage-client/flow'
 import { buildConsumeTx } from '@meddleware/access-gate-client'
 
-const RELAY = 'https://sui-walrus-relay-testnet.meddleware.co.uk'
+const RELAY = 'https://sui-walrus-storage-relay-testnet.meddleware.co.uk'
 
 const access = createGatedAccess<Transaction>({
   storage: localStorage,
@@ -55,13 +55,13 @@ What the flow guarantees:
 - **Duplicates are caught before paying:** pass `findExistingCopy` and an existing owned copy aborts
   before register (`getDuplicateExisting(err)`).
 
-For a gateway **without** single-use mode, `createRelayAccessToken` from `@meddleware/walrus-client`
+For a gateway **without** single-use mode, `createRelayAccessToken` from `@meddleware/walrus-storage-client`
 returns a token to pass as `createWalrusClient({ uploadRelayAuthToken })`:
 
 ```ts
-import { createRelayAccessToken, createWalrusClient } from '@meddleware/walrus-client'
+import { createRelayAccessToken, createWalrusClient } from '@meddleware/walrus-storage-client'
 
-const RELAY = 'https://sui-walrus-relay-testnet.meddleware.co.uk' // as above
+const RELAY = 'https://sui-walrus-storage-relay-testnet.meddleware.co.uk' // as above
 
 const token = await createRelayAccessToken({
   relayHost: RELAY,
@@ -75,14 +75,14 @@ const relayWalrus = createWalrusClient({ network: 'testnet', uploadRelayHost: RE
 
 `gateConfig` is the `AccessGateConfig` of the gate the relay checks — `relayGateConfig(network,
 { gateId, soulbound, priceMist })` from
-[`@meddleware/walrus-relay`](https://www.npmjs.com/package/@meddleware/walrus-relay) builds it with
+[`@meddleware/walrus-storage-kit`](https://www.npmjs.com/package/@meddleware/walrus-storage-kit) builds it with
 Meddleware's deployment — and `passId` a pass the wallet holds for it (see
 [Access Gate](/sui/access-gate/)).
 
 ### Tips
 
 The relay charges a tip on each upload, paid inside the register transaction. Read the schedule from
-`GET /v1/tip-config` (`parseTipFromConfig` in `@meddleware/walrus-relay` extracts it), and cap what
+`GET /v1/tip-config` (`parseTipFromConfig` in `@meddleware/walrus-storage-kit` extracts it), and cap what
 the client will pay with `uploadRelayMaxTipMist`. The tip and a per-attempt nonce are embedded in the
 register transaction, so a failed attempt is retried with a **fresh** flow — never by resuming an old
 registration.
@@ -90,7 +90,7 @@ registration.
 ## Extend a blob's lifetime
 
 ```ts
-import { extendBlobLifetimeTransaction } from '@meddleware/walrus-client'
+import { extendBlobLifetimeTransaction } from '@meddleware/walrus-storage-client'
 
 const tx = await extendBlobLifetimeTransaction(walrus, blobObjectId, { epochs: 26 }) // or { endEpoch }
 await exec.signAndExecute(tx)
@@ -101,7 +101,7 @@ await exec.signAndExecute(tx)
 ## Estimate storage cost
 
 ```ts
-import { estimateStorageCost } from '@meddleware/walrus-client'
+import { estimateStorageCost } from '@meddleware/walrus-storage-client'
 
 const { storageCost, writeCost, totalCost } = await estimateStorageCost(walrus, bytes.length, 53)
 ```
@@ -111,7 +111,7 @@ Costs are in WAL base units; an extension pays only the storage part.
 ## List a wallet's blobs
 
 ```ts
-import { fetchOwnedWalrusBlobs } from '@meddleware/walrus-client'
+import { fetchOwnedWalrusBlobs } from '@meddleware/walrus-storage-client'
 
 const blobs = await fetchOwnedWalrusBlobs(walrus, walrus, owner)
 // [{ objectId, blobId, size, endEpoch, certified }]
@@ -125,7 +125,7 @@ resolved from the live Walrus package, so no address is hard-coded.
 On-chain key/value metadata on a `Blob` object:
 
 ```ts
-import { setBlobAttributesTransaction, readBlobAttributes } from '@meddleware/walrus-client'
+import { setBlobAttributesTransaction, readBlobAttributes } from '@meddleware/walrus-storage-client'
 
 await exec.signAndExecute(await setBlobAttributesTransaction(walrus, blobObjectId, { 'content-type': 'image/png' }))
 const attrs = await readBlobAttributes(walrus, blobObjectId) // null when none are set
@@ -136,7 +136,7 @@ A `null` value deletes that attribute.
 ## Errors
 
 - **Epoch transitions:** uploads can fail with `RetryableWalrusClientError` (re-exported by
-  `@meddleware/walrus-client`) while Walrus changes epoch — retry with a fresh flow.
+  `@meddleware/walrus-storage-client`) while Walrus changes epoch — retry with a fresh flow.
 - **Gateway responses:** `401` — no proof; `403` — bad proof or signature, stale or reused nonce,
   no matching consume, or the wallet holds no valid pass; `409` — that consume was already redeemed
   for an upload, or one is in progress (a failed upload releases it for retry); `429` — per-address

@@ -57,8 +57,8 @@ declare const suiClient: import('@mysten/sui/grpc').SuiGrpcClient
 declare const tx: import('@mysten/sui/transactions').Transaction
 declare const gate: import('@meddleware/access-gate-client').AccessGateConfig
 declare const gateConfig: import('@meddleware/access-gate-client').AccessGateConfig
-declare const walrus: ReturnType<typeof import('@meddleware/walrus-client').createWalrusClient>
-declare const seal: import('@meddleware/seal-client/controller').SealController
+declare const walrus: ReturnType<typeof import('@meddleware/walrus-storage-client').createWalrusClient>
+declare const seal: import('@meddleware/sealed-storage-client/controller').SealController
 // The wallet signer the guides hand to `sign` / `signPersonalMessage`.
 declare const wallet: { signPersonalMessage(input: { message: Uint8Array }): Promise<{ signature: string }> }
 // `exec`: the executor `buildExecutor()` of @meddleware/wallet-adapter returns.
@@ -68,4 +68,4 @@ declare const g: Awaited<ReturnType<typeof import('@meddleware/access-gate-clien
 // The Seal identity returned by the encrypt step.
 declare const id: string
 // The registry created in the Sealed Storage SDK setup.
-declare const registry: import('@meddleware/seal-client').PolicyRegistry
+declare const registry: import('@meddleware/sealed-storage-client').PolicyRegistry

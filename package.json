@@ -1,13 +1,13 @@
 {
-  "name": "@meddleware/dev",
-  "version": "0.0.26",
+  "name": "@meddleware/dev-site",
+  "version": "0.0.27",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
   "license": "0BSD",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/meddleware-org/dev.git"
+    "url": "git+https://github.com/meddleware-org/dev-site.git"
   },
   "type": "module",
   "files": [
@@ -51,12 +51,12 @@
   "devDependencies": {
     "@meddleware/access-gate-client": "^0.0.9",
     "@meddleware/access-gate-sui": "^0.0.7",
-    "@meddleware/nft-gate-client": "^0.0.17",
-    "@meddleware/seal-client": "^0.0.20",
-    "@meddleware/seal-policies-sui": "^0.0.7",
-    "@meddleware/sui-token-template": "^1.0.9",
+    "@meddleware/access-gate-gateway-client": "^0.0.19",
+    "@meddleware/sealed-storage-client": "^0.0.24",
+    "@meddleware/sealed-storage-sui": "^0.0.9",
+    "@meddleware/token-issuance-template-sui": "^1.0.10",
     "@meddleware/wallet-adapter": "^0.0.17",
-    "@meddleware/walrus-client": "^0.0.29",
+    "@meddleware/walrus-storage-client": "^0.0.31",
     "@mysten/seal": "^1.5.0",
     "@mysten/sui": "^2.36.0",
     "@mysten/walrus": "~1.2.35",

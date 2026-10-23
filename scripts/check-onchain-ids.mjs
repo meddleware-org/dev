@@ -1,7 +1,7 @@
 // Build-time drift check for the on-chain ids typed into the hand-written pages.
 //
 // The canonical record of a deployment is the generated `deployments` export of the published
-// clients (`@meddleware/access-gate-client`, `@meddleware/seal-client`), which come from the Move
+// clients (`@meddleware/access-gate-client`, `@meddleware/sealed-storage-client`), which come from the Move
 // packages' own `Published.toml`. This site must not carry a second, hand-maintained copy that can
 // silently lag a republication, so the build fails when:
 //   1. a hand-written page contains a 32-byte `0x…` id that is not a current testnet id of either
@@ -29,7 +29,7 @@ export const REQUIRED = {
 }
 
 // 32-byte ids that are not package deployments but are typed into a sample on purpose: the Seal
-// testnet key-server object ids (the same defaults `seal-ui` uses). Keep each with its reason.
+// testnet key-server object ids (the same defaults `sealed-storage-ui` uses). Keep each with its reason.
 export const OTHER_IDS = new Set([
   '0xb012378c9f3799fb5b1a7083da74a4069e3c3f1c93de0b27212a5799ce1e1e98', // Mysten testnet committee (aggregator)
   '0x73d05d62c18d9374e3ea529e8e0ed6161da1a141a94d3f76ae3fe4e99356db75', // independent testnet key server
@@ -49,7 +49,7 @@ async function loadTsModule(file) {
 export async function loadDeployments(resolveFrom = root) {
   const require = createRequire(join(resolveFrom, 'package.json'))
   const gate = await loadTsModule(require.resolve('@meddleware/access-gate-client/deployments'))
-  const seal = await loadTsModule(require.resolve('@meddleware/seal-client/deployments'))
+  const seal = await loadTsModule(require.resolve('@meddleware/sealed-storage-client/deployments'))
   const testnetGate = gate.ACCESS_GATE_DEPLOYMENTS?.testnet
   const testnetSeal = seal.SEAL_POLICIES_DEPLOYMENTS?.testnet
   if (!testnetGate || !testnetSeal) throw new Error('a client exports no testnet deployment')
@@ -111,7 +111,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   if (problems.length) {
     console.error('check-onchain-ids: reference pages drifted from the clients\' deployments:')
     for (const p of problems) console.error(`  ${p}`)
-    console.error('Edit the page to the id in @meddleware/access-gate-client / seal-client `deployments`.')
+    console.error('Edit the page to the id in @meddleware/access-gate-client / sealed-storage-client `deployments`.')
     process.exit(1)
   }
   console.log('check-onchain-ids: every on-chain id in the reference pages matches the clients\' deployments.')

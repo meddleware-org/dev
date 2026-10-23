@@ -69,8 +69,8 @@ Each package is a standalone repository with its own lockfile — there is no mo
 Clone what you need and work in it directly:
 
 ```bash
-git clone https://github.com/meddleware-org/seal-client.git
-cd seal-client && npm install && npm test && npm run type-check
+git clone https://github.com/meddleware-org/sealed-storage-client.git
+cd sealed-storage-client && npm install && npm test && npm run type-check
 ```
 
 Apps depend on the SDKs through npm; to develop an app against an unpublished SDK change, use

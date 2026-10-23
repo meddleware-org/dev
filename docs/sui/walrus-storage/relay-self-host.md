@@ -2,16 +2,16 @@
 
 A Walrus **upload relay** encodes a blob and fans it out to the storage nodes on the client's behalf,
 so a browser uploads once instead of to every node. Meddleware runs Mysten's
-[`walrus-upload-relay`](https://docs.wal.app/) and puts an [nft-gate gateway](/sui/access-gate/gateway)
+[`walrus-upload-relay`](https://docs.wal.app/) and puts an [access-gate gateway](/sui/access-gate/gateway)
 in front of it, so only holders of an access pass can upload.
 
 ## Architecture
 
 ```text
-Browser (walrus-client, uploadRelayHost = gateway)
+Browser (walrus-storage-client, uploadRelayHost = gateway)
   │
   ▼
-nft-gate gateway  (Cloudflare Worker or Rust)
+access-gate gateway  (Cloudflare Worker or Rust)
   │  GET /v1/challenge · verifies the access proof (+ consume in single-use mode)
   │  public: /v1/tip-config
   │  adds origin credentials (e.g. Cloudflare Access service token)
@@ -49,7 +49,7 @@ and Prometheus metrics on `9184`.
 
 ## 2. Put the gateway in front
 
-Deploy an nft-gate gateway ([deployment guide](/sui/access-gate/gateway)) with:
+Deploy an access-gate gateway ([deployment guide](/sui/access-gate/gateway)) with:
 
 | Setting | Value for a relay |
 | --- | --- |

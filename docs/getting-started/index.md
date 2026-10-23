@@ -21,7 +21,7 @@ The Meddleware platform provides composable tools on Sui:
 - **Walrus Storage** — upload files to Walrus through an upload relay, optionally gated by an access pass.
 - **Sealed Storage** — encrypt data to on-chain Seal policies and store the ciphertext on Walrus.
 - **Access Gate** — create and sell NFT access passes that gate content, relay access or any service.
-- **Token Deployer** — publish your own Sui coin from the browser with your wallet.
+- **Token Issuance** — publish your own Sui coin from the browser with your wallet.
 
 They compose: the hosted Walrus relay admits Access Gate pass-holders, and Sealed Storage's
 `nft_gate` policy decrypts for the holders of a gate's passes.
@@ -32,11 +32,11 @@ Every component is its own repository under [github.com/meddleware-org](https://
 
 | Layer | Repositories |
 | --- | --- |
-| Move packages | `access-gate-sui`, `seal-policies-sui`, `sui-token-template` |
-| TypeScript SDKs | `access-gate-client`, `nft-gate-client`, `seal-client`, `walrus-client`, `wallet-adapter` |
+| Move packages | `access-gate-sui`, `sealed-storage-sui`, `token-issuance-template-sui` |
+| TypeScript SDKs | `access-gate-client`, `access-gate-gateway-client`, `sealed-storage-client`, `walrus-storage-client`, `wallet-adapter` |
 | Services | `nft-gate` (gateway: Workers + Rust), `sui-indexer` (display-only read-indexer) |
-| Apps | `walrus-ui`, `seal-ui`, `access-gate-ui`, `token-deployer-ui`, `dashboard` |
-| Shared UI | `design-tokens`, `ui`, `walrus-relay` |
+| Apps | `walrus-storage-ui`, `sealed-storage-ui`, `access-gate-ui`, `token-issuance-ui`, `dashboard` |
+| Shared UI | `design-tokens`, `ui`, `walrus-storage-kit` |
 | Documentation | `docs` (docs.meddleware.co.uk), `dev` (this site) |
 
 ## Next steps

@@ -1,4 +1,4 @@
-# CLAUDE.md — @meddleware/dev
+# CLAUDE.md — @meddleware/dev-site
 
 Developer documentation site for `dev.meddleware.co.uk`. VitePress 2.0.0-alpha.20.
 
@@ -12,9 +12,9 @@ Developer-facing integration guides, SDK references, and self-host instructions.
 
 ## What this package is NOT
 
-- No TypeDoc / API reference generation — that lives in `repos/docs/`.
+- No TypeDoc / API reference generation — that lives in `repos/docs-site/`.
 - No white-label operator guides — positions annotated only (see below).
-- No user-facing product documentation — that lives in `repos/docs/`.
+- No user-facing product documentation — that lives in `repos/docs-site/`.
 
 ## Build
 
@@ -28,7 +28,7 @@ npm test         # vitest: on-chain id check, ts-sample type-check, package cont
 No `gen:api` (TypeDoc) step. The only prebuild is `gen:onchain` (run automatically by `build`/`dev`):
 
 - **On-chain docs are imported, never authored here.** For the Sui Move packages
-  (`access-gate-sui`, `seal-policies-sui`, `sui-token-template`) the canonical on-chain docs live in
+  (`access-gate-sui`, `sealed-storage-sui`, `token-issuance-template-sui`) the canonical on-chain docs live in
   each package repo (`docs/onchain/*.md` + `manifest.json`) and ship in its npm package.
   `scripts/gen-onchain.mjs` (run by `build`/`dev`) copies the pages the manifest assigns to this site
   into a git-ignored subtree and generates the sidebar (`docs/.vitepress/generated/`). Resolution is
@@ -44,7 +44,7 @@ No `gen:api` (TypeDoc) step. The only prebuild is `gen:onchain` (run automatical
 - **On-chain ids are checked, not generated.** Hand-written pages carry the testnet ids of
   `access_gate` / `seal_policies` (`docs/sui/index.md` table) and the Seal key-server object ids.
   `scripts/check-onchain-ids.mjs` (part of `build`) fails when any 32-byte id in a page differs from the
-  `deployments` of `@meddleware/access-gate-client` / `@meddleware/seal-client` or when the table lacks
+  `deployments` of `@meddleware/access-gate-client` / `@meddleware/sealed-storage-client` or when the table lacks
   one; the key-server ids are listed in the script's `OTHER_IDS`. After a republication: bump the clients,
   edit the page to the new ids.
 - **Samples are type-checked.** `tests/samples.test.mjs` compiles every fenced `ts` block under `docs/`
@@ -82,12 +82,12 @@ from the imported on-chain docs; link to them instead of restating tables.
 
 | Content type | Site |
 | --- | --- |
-| User guides, UI walkthroughs, FAQ | `repos/docs/` → `docs.meddleware.co.uk` |
-| SDK install, integration code, self-host | `repos/dev/` → `dev.meddleware.co.uk` |
-| TypeDoc API reference | `repos/docs/` → `docs.meddleware.co.uk/blockchain/sui/` |
+| User guides, UI walkthroughs, FAQ | `repos/docs-site/` → `docs.meddleware.co.uk` |
+| SDK install, integration code, self-host | `repos/dev-site/` → `dev.meddleware.co.uk` |
+| TypeDoc API reference | `repos/docs-site/` → `docs.meddleware.co.uk/blockchain/sui/` |
 
 Cross-links: `dev.` nav has "API reference" pointing to `docs.`; `docs.` service reference pages have `:::tip` callouts into `dev.`.
 
 ## Sister site
 
-`repos/docs/` (`docs.meddleware.co.uk`) is the sister site. k8s manifests live at `post-bootstrap/dev/`. Image: `quay.io/meddleware-org/dev`.
+`repos/docs-site/` (`docs.meddleware.co.uk`) is the sister site. k8s manifests live at `post-bootstrap/dev-site/`. Image: `quay.io/meddleware-org/dev-site`.

@@ -7,8 +7,8 @@ transactions (in Vue: `@meddleware/wallet-adapter`).
 ## Encrypt to an access gate and store on Walrus
 
 ```ts
-import { createBlobUploadFlow } from '@meddleware/walrus-client'
-import type { SealedManifest } from '@meddleware/seal-client'
+import { createBlobUploadFlow } from '@meddleware/walrus-storage-client'
+import type { SealedManifest } from '@meddleware/sealed-storage-client'
 
 // 1. Encrypt locally: anyone holding a valid pass for `gateId` will be able to decrypt. The
 //    controller (SDK setup) refuses a gate that mints transferable passes: seal to a soulbound gate.
@@ -38,9 +38,9 @@ A time lock instead: `seal.encrypt('time-lock', { unlockMs: Date.parse('2027-01-
 ## Decrypt
 
 ```ts
-import { parseSealedManifest, SealedManifestError } from '@meddleware/seal-client'
-import { WALRUS_AGGREGATOR_HOSTS } from '@meddleware/walrus-client'
-import { readBlob } from '@meddleware/walrus-client/http'
+import { parseSealedManifest, SealedManifestError } from '@meddleware/sealed-storage-client'
+import { WALRUS_AGGREGATOR_HOSTS } from '@meddleware/walrus-storage-client'
+import { readBlob } from '@meddleware/walrus-storage-client/http'
 
 const m = parseSealedManifest(untrustedJson, registry) // `registry` from the SDK setup: it also validates the policy's params
 if (m.network !== 'testnet') throw new Error('Manifest is for another network')
@@ -69,7 +69,7 @@ list what a gate protects. It is **not** a policy and grants nothing:
 
 ```ts
 import { Transaction } from '@mysten/sui/transactions'
-import { buildPublishSealedContentTx, sealedContentEventType } from '@meddleware/seal-client'
+import { buildPublishSealedContentTx, sealedContentEventType } from '@meddleware/sealed-storage-client'
 
 const tx = new Transaction()
 // { publishedAt, policyConfigId } from sealPoliciesDeployment(network)

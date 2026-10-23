@@ -30,8 +30,8 @@ const OTHER_SITE = { id: 'docs', origin: 'https://docs.meddleware.co.uk', base: 
 // fallbacks for the placeholder when the package (and so its manifest) is unavailable.
 const PACKAGES = [
   { pkg: '@meddleware/access-gate-sui', repoDir: 'access-gate-sui', slug: 'access-gate', title: 'Access Gate' },
-  { pkg: '@meddleware/seal-policies-sui', repoDir: 'seal-policies-sui', slug: 'sealed-storage', title: 'Sealed Storage policies' },
-  { pkg: '@meddleware/sui-token-template', repoDir: 'sui-token-template', slug: 'token-deployer', title: 'Token Deployer' },
+  { pkg: '@meddleware/sealed-storage-sui', repoDir: 'sealed-storage-sui', slug: 'sealed-storage', title: 'Sealed Storage policies' },
+  { pkg: '@meddleware/token-issuance-template-sui', repoDir: 'token-issuance-template-sui', slug: 'token-issuance', title: 'Token Issuance' },
 ]
 
 const require = createRequire(import.meta.url)

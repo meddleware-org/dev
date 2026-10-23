@@ -2,7 +2,7 @@
 
 [User docs →](https://docs.meddleware.co.uk/blockchain/sui/walrus-storage/) | [API reference →](https://docs.meddleware.co.uk/blockchain/sui/walrus-storage/reference)
 
-[`@meddleware/walrus-client`](https://www.npmjs.com/package/@meddleware/walrus-client) wraps
+[`@meddleware/walrus-storage-client`](https://www.npmjs.com/package/@meddleware/walrus-storage-client) wraps
 `@mysten/walrus`: a configured client factory, upload flows that work with wallet pop-ups, lifetime
 extension, on-chain blob attributes, owned-blob queries, and access tokens for NFT-gated upload
 relays.
@@ -10,14 +10,14 @@ relays.
 ## Install
 
 ```bash
-npm install @meddleware/walrus-client @mysten/walrus @mysten/sui
+npm install @meddleware/walrus-storage-client @mysten/walrus @mysten/sui
 ```
 
 ## Create a client
 
 ```ts
 import walrusWasmUrl from '@mysten/walrus-wasm/web/walrus_wasm_bg.wasm?url' // browser (Vite) only
-import { createWalrusClient } from '@meddleware/walrus-client'
+import { createWalrusClient } from '@meddleware/walrus-storage-client'
 
 const walrus = createWalrusClient({
   network: 'testnet',          // 'testnet' | 'mainnet'
@@ -45,7 +45,7 @@ itself (use it for images and anything linked directly); `createUploadFlow` stor
 files instead.
 
 ```ts
-import { createBlobUploadFlow, walrusBlobUrl } from '@meddleware/walrus-client'
+import { createBlobUploadFlow, walrusBlobUrl } from '@meddleware/walrus-storage-client'
 
 const flow = createBlobUploadFlow(walrus, bytes)
 await flow.encode()
@@ -67,8 +67,8 @@ console.log(walrusBlobUrl('testnet', blobId))
 ## Upload from Node.js
 
 ```ts
-import { createWalrusClient, LONG_TERM_EPOCHS, MAX_SINGLE_RESERVATION_EPOCHS } from '@meddleware/walrus-client'
-import { uploadLocalFile } from '@meddleware/walrus-client/node'
+import { createWalrusClient, LONG_TERM_EPOCHS, MAX_SINGLE_RESERVATION_EPOCHS } from '@meddleware/walrus-storage-client'
+import { uploadLocalFile } from '@meddleware/walrus-storage-client/node'
 
 const walrus = createWalrusClient({ network: 'testnet' })
 const { blobId } = await uploadLocalFile(walrus, 'assets/icon.png', 'icon.png', keypair, {
@@ -83,8 +83,8 @@ Blobs are public: read them from any Walrus aggregator. `readBlob` adds a timeou
 `walrusBlobUrl` gives a plain URL for `<img src>` and links.
 
 ```ts
-import { WALRUS_AGGREGATOR_HOSTS, walrusBlobUrl } from '@meddleware/walrus-client'
-import { readBlob } from '@meddleware/walrus-client/http'
+import { WALRUS_AGGREGATOR_HOSTS, walrusBlobUrl } from '@meddleware/walrus-storage-client'
+import { readBlob } from '@meddleware/walrus-storage-client/http'
 
 const bytes = await readBlob(blobId, { aggregator: WALRUS_AGGREGATOR_HOSTS.testnet })
 const href = walrusBlobUrl('testnet', blobId)

@@ -1,6 +1,6 @@
 # Deploy the NFT gate gateway
 
-[`nft-gate`](https://github.com/meddleware-org/nft-gate) is a generic **NFT-gated reverse proxy**:
+[`nft-gate`](https://github.com/meddleware-org/access-gate-gateway) is a generic **NFT-gated reverse proxy**:
 put it in front of any HTTP service (an upload relay, a website, an API) and only holders of an
 `access_gate` pass get through. It issues challenge nonces, verifies wallet-signed access proofs and
 pass ownership on-chain, rate-limits per address, and proxies authorised requests to the upstream.
@@ -9,12 +9,12 @@ It issues no sessions or tokens of its own — every request carries a fresh pro
 ## Implementations
 
 Two wire-identical implementations share the same routes, status codes, proof format and variable
-names, and are tested against the same [conformance vectors](https://github.com/meddleware-org/nft-gate/tree/main/conformance):
+names, and are tested against the same [conformance vectors](https://github.com/meddleware-org/access-gate-gateway/tree/main/conformance):
 
 | Implementation | Source | Distributed as | State (nonces, rate limits) |
 | --- | --- | --- | --- |
-| Cloudflare Workers | `gateway-workers/` | npm `@meddleware/nft-gate-gateway`, `wrangler deploy` | Durable Objects (default) or KV |
-| Rust / Axum | `gateway-rust/` | crates.io `nft-gate-gateway`, Docker `meddleware/nft-gate-gateway` | in memory, or Redis/Dragonfly for more than one replica |
+| Cloudflare Workers | `gateway-workers/` | npm `@meddleware/access-gate-gateway`, `wrangler deploy` | Durable Objects (default) or KV |
+| Rust / Axum | `gateway-rust/` | crates.io `access-gate-gateway`, Docker `meddleware/access-gate-gateway` | in memory, or Redis/Dragonfly for more than one replica |
 
 Both query the chain over Sui **gRPC**.
 
@@ -42,7 +42,7 @@ consume:<base58 digest>      (single-use gateways only)
 
 The gateway rebuilds this message from its own configuration, so `GATEWAY_ORIGIN`, `GATE_ID` and
 `NETWORK` are required settings. The message grammar and the conformance `vectors.json` are defined
-by [`@meddleware/nft-gate-client`](https://github.com/meddleware-org/nft-gate-client#wire-protocol);
+by [`@meddleware/access-gate-gateway-client`](https://github.com/meddleware-org/access-gate-gateway-client#wire-protocol);
 clients build it with `buildAccessProof`, see
 [proving access to a gateway](./integration#proving-access-to-a-gateway).
 
@@ -68,8 +68,8 @@ clients build it with `buildAccessProof`, see
 The table is a summary, checked against nft-gate 0.0.22 (`gateway-workers` and `gateway-rust`); a later
 release may add settings, so the READMEs are authoritative and hold the complete tables (timeouts, lease and
 retention windows, per-IP budgets):
-[Workers](https://github.com/meddleware-org/nft-gate/blob/main/gateway-workers/README.md#full-configuration-reference),
-[Rust](https://github.com/meddleware-org/nft-gate/blob/main/gateway-rust/README.md#configuration-environment-variables).
+[Workers](https://github.com/meddleware-org/access-gate-gateway/blob/main/gateway-workers/README.md#full-configuration-reference),
+[Rust](https://github.com/meddleware-org/access-gate-gateway/blob/main/gateway-rust/README.md#configuration-environment-variables).
 Every value is validated at startup: a bad or missing required value is a refusal to serve, never a weaker mode.
 
 Implementation-specific settings (Workers: `NONCE_BACKEND`, `NONCE_SHARD`, quota guard; Rust:
@@ -78,8 +78,8 @@ Implementation-specific settings (Workers: `NONCE_BACKEND`, `NONCE_SHARD`, quota
 ## Deploy on Cloudflare Workers
 
 ```bash
-git clone https://github.com/meddleware-org/nft-gate.git
-cd nft-gate/gateway-workers
+git clone https://github.com/meddleware-org/access-gate-gateway.git
+cd access-gate-gateway/gateway-workers
 npm install
 # edit wrangler.toml: [[routes]] pattern + zone, and the public [vars]:
 #   GATEWAY_ORIGIN = "https://gate.example.com"   (the route's hostname)
@@ -110,7 +110,7 @@ docker run -p 8080:8080 \
   -e SUI_RPC_URL=https://fullnode.testnet.sui.io:443 \
   -e NFT_TYPE=0x<access_gate original id>::access_gate::AccessNFT \
   -e GATE_ID=0x<gate id> \
-  meddleware/nft-gate-gateway
+  meddleware/access-gate-gateway
 ```
 
 `ALLOW_INSECURE_HTTP=1` is needed only for an `http://` upstream inside your own network; otherwise
@@ -127,7 +127,7 @@ gateway.
 | --- | --- |
 | `401` | no access proof |
 | `403` | malformed proof, bad signature, unknown/expired/reused nonce, missing consume (single-use), or the address holds no matching pass |
-| `409` | single-use: body `code` is `redeemed` (that consume was already spent) or `leased` (a request using it is in flight; released again if the upstream fails) — `GATEWAY_CONFLICT_CODES` in `nft-gate-client` |
+| `409` | single-use: body `code` is `redeemed` (that consume was already spent) or `leased` (a request using it is in flight; released again if the upstream fails) — `GATEWAY_CONFLICT_CODES` in `access-gate-gateway-client` |
 | `413` | body above `MAX_BODY_BYTES` |
 | `429` | rate limit exceeded |
 | `502` | the gateway could not query the chain |
