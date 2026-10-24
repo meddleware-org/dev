@@ -1,6 +1,6 @@
 # Deploy the NFT gate gateway
 
-[`nft-gate`](https://github.com/meddleware-org/access-gate-gateway) is a generic **NFT-gated reverse proxy**:
+[`access-gate-gateway`](https://github.com/meddleware-org/access-gate-gateway) is a generic **NFT-gated reverse proxy**:
 put it in front of any HTTP service (an upload relay, a website, an API) and only holders of an
 `access_gate` pass get through. It issues challenge nonces, verifies wallet-signed access proofs and
 pass ownership on-chain, rate-limits per address, and proxies authorised requests to the upstream.
@@ -65,7 +65,7 @@ clients build it with `buildAccessProof`, see
 | `UPSTREAM_AUTH_HEADERS` | | — | JSON array `[{"name":…,"value":…}]` of headers added to upstream requests (e.g. a Cloudflare Access service token); invalid JSON fails closed |
 | `ALLOWED_ORIGINS` | | none | Comma-separated canonical browser origins granted CORS; unset grants none |
 
-The table is a summary, checked against nft-gate 0.0.22 (`gateway-workers` and `gateway-rust`); a later
+The table is a summary, checked against access-gate-gateway 0.0.22 (then named `nft-gate`) (`gateway-workers` and `gateway-rust`); a later
 release may add settings, so the READMEs are authoritative and hold the complete tables (timeouts, lease and
 retention windows, per-IP budgets):
 [Workers](https://github.com/meddleware-org/access-gate-gateway/blob/main/gateway-workers/README.md#full-configuration-reference),

@@ -34,7 +34,7 @@ Every component is its own repository under [github.com/meddleware-org](https://
 | --- | --- |
 | Move packages | `access-gate-sui`, `sealed-storage-sui`, `token-issuance-template-sui` |
 | TypeScript SDKs | `access-gate-client`, `access-gate-gateway-client`, `sealed-storage-client`, `walrus-storage-client`, `wallet-adapter` |
-| Services | `nft-gate` (gateway: Workers + Rust), `sui-indexer` (display-only read-indexer) |
+| Services | `access-gate-gateway` (gateway: Workers + Rust), `sui-indexer` (display-only read-indexer) |
 | Apps | `walrus-storage-ui`, `sealed-storage-ui`, `access-gate-ui`, `token-issuance-ui`, `dashboard` |
 | Shared UI | `design-tokens`, `ui`, `walrus-storage-kit` |
 | Documentation | `docs` (docs.meddleware.co.uk), `dev` (this site) |
