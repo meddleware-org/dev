@@ -93,6 +93,13 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.31] - 2026-10-24
+
+### Changed
+
+- Protocol pages: the access message is `access-gate-gateway:access:v3`, the loop marker `Via: 1.1 access-gate-gateway`; the Move packages are `sealed_storage` and `token_issuance_template` (ADR-0004).
+- `robots.txt`, a curated `llms.txt` and a generated `llms-full.txt` (the whole site in one file, built after `vitepress build`).
+
 ## [0.0.30] - 2026-10-24
 
 ### Fixed

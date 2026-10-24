@@ -23,7 +23,7 @@ rather than hard-coding it. A paused gate refuses purchases (`access_gate` abort
 
 The wallet signs the gateway's challenge; the gateway checks the signature, that the nonce is fresh
 and unused, and that the address owns a pass for the gate. The challenge and proof come from
-`@meddleware/access-gate-gateway-client`. The signed message (`nft-gate:access:v2`) is bound to the gateway's
+`@meddleware/access-gate-gateway-client`. The signed message (`access-gate-gateway:access:v3`) is bound to the gateway's
 origin, the gate and the network, so `buildAccessProof` requires all three: a proof made for one
 gateway, gate or network is useless at any other ([the message](./gateway#routes)).
 

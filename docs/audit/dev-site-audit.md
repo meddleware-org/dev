@@ -658,3 +658,5 @@ None.
   - **Measured:** type-check, lint, vitest (21 tests, 4 files; the new test red before the change), build and the audit gate pass. `img-src ... https:` is unchanged.
   - **Not verified:** the deployed header after release (read it with `curl -sI https://dev.meddleware.co.uk/` once 0.0.26 is deployed).
 - 2026-10-24 — repository renamed from `dev` to `dev-site` (workspace naming convention, `docs/architecture/ADR-0003-naming.md`): package, image, host and path names updated throughout. No finding, disposition or evidence changed.
+- 2026-10-24 — identifier alignment (`docs/architecture/ADR-0004-identifier-alignment.md`): protocol pages updated (`access-gate-gateway:access:v3`, `Via: 1.1 access-gate-gateway`, `sealed_storage`, `token_issuance_template`).
+- 2026-10-24 — `robots.txt`, curated `llms.txt`, and `llms-full.txt` generated after `vitepress build` from the published pages only (audit and generated API pages excluded; `check-dist-no-audit.mjs` still runs last). Build verified.

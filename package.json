@@ -1,6 +1,6 @@
 {
   "name": "@meddleware/dev-site",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
@@ -29,7 +29,7 @@
   "scripts": {
     "gen:onchain": "node scripts/gen-onchain.mjs",
     "dev": "npm run gen:onchain && vitepress dev docs",
-    "build": "npm run gen:onchain && npm run check:onchain-ids && vitepress build docs && node scripts/check-dist-no-audit.mjs",
+    "build": "npm run gen:onchain && npm run check:onchain-ids && vitepress build docs && node scripts/gen-llms-full.mjs https://dev.meddleware.co.uk \"Meddleware developer documentation\" && node scripts/check-dist-no-audit.mjs",
     "preview": "vitepress preview docs",
     "type-check": "tsc --noEmit",
     "lint:css": "stylelint \"docs/.vitepress/**/*.{css,vue}\"",
@@ -46,17 +46,17 @@
   },
   "dependencies": {
     "@meddleware/design-tokens": "^0.1.10",
-    "@meddleware/ui": "^0.1.33"
+    "@meddleware/ui": "^0.1.34"
   },
   "devDependencies": {
-    "@meddleware/access-gate-client": "^0.0.11",
-    "@meddleware/access-gate-sui": "^0.0.9",
-    "@meddleware/access-gate-gateway-client": "^0.0.20",
-    "@meddleware/sealed-storage-client": "^0.0.24",
-    "@meddleware/sealed-storage-sui": "^0.0.9",
-    "@meddleware/token-issuance-template-sui": "^1.0.10",
+    "@meddleware/access-gate-client": "^0.0.12",
+    "@meddleware/access-gate-sui": "^0.0.10",
+    "@meddleware/access-gate-gateway-client": "^0.0.21",
+    "@meddleware/sealed-storage-client": "^0.0.25",
+    "@meddleware/sealed-storage-sui": "^0.0.10",
+    "@meddleware/token-issuance-template-sui": "^1.0.11",
     "@meddleware/wallet-adapter": "^0.0.18",
-    "@meddleware/walrus-storage-client": "^0.0.31",
+    "@meddleware/walrus-storage-client": "^0.0.32",
     "@mysten/seal": "^1.5.0",
     "@mysten/sui": "^2.36.0",
     "@mysten/walrus": "~1.2.35",

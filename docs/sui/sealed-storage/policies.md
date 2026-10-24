@@ -2,7 +2,7 @@
 
 Seal access policies are **Move functions**, not objects: a Seal key server releases a key share only
 if the policy's `seal_approve*` entry function **succeeds in a dry run** with the requester as sender.
-The `seal_policies` package (`sealed-storage-sui`) ships the built-in policies; its on-chain reference
+The `sealed_storage` package (`sealed-storage-sui`) ships the built-in policies; its on-chain reference
 is maintained with the package and imported into this site:
 
 - [On-chain overview](/sui/onchain/sealed-storage/overview)
@@ -65,14 +65,14 @@ Rules every policy MUST follow:
   content.
 - Membership, not consumption: approval cannot spend anything, and a released key stays usable.
 - If the package will ever be upgraded, gate every entry on a versioned shared object (as
-  `seal_policies::config` does) so an upgrade can retire the old code; older versions stay callable
+  `sealed_storage::config` does) so an upgrade can retire the old code; older versions stay callable
   on-chain otherwise.
 
 ## Policy lifecycle
 
 - Encryption binds the ciphertext to a package ID and identity; it cannot be re-pointed afterwards.
 - An upgradeable policy package can change who may decrypt **all** existing ciphertext. MeddleWare's
-  `seal_policies` moves its `UpgradeCap` to a multisig at each release and burns it on a planned date
+  `sealed_storage` moves its `UpgradeCap` to a multisig at each release and burns it on a planned date
   after a verification window (the package's `CUSTODY.md`); do the same, or burn it, before relying on
   your own policy package in production.
 

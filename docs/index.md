@@ -34,7 +34,7 @@ features:
     link: /sui/access-gate/
     linkText: Access Gate
   - title: Contract layout
-    details: The Move packages (access_gate, seal_policies, sui_token_template), their testnet IDs, and the on-chain reference for each.
+    details: The Move packages (access_gate, sealed_storage, sui_token_template), their testnet IDs, and the on-chain reference for each.
     link: /sui/#contract-layout
     linkText: Contract layout
   - title: API reference

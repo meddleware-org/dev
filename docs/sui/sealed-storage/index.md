@@ -4,7 +4,7 @@
 
 Sealed Storage encrypts data client-side with [Seal](https://seal-docs.wal.app/) threshold
 encryption and stores the ciphertext on Walrus. A Seal key server releases its key share only if an
-on-chain policy (`seal_policies::<module>::seal_approve*`) succeeds in a dry run with the requester
+on-chain policy (`sealed_storage::<module>::seal_approve*`) succeeds in a dry run with the requester
 as sender, so only addresses that satisfy the policy can decrypt.
 
 [`@meddleware/sealed-storage-client`](https://www.npmjs.com/package/@meddleware/sealed-storage-client) is the client half:
@@ -40,7 +40,7 @@ const suiClient = new SuiGrpcClient({ network: 'testnet', baseUrl: 'https://full
 // target of seal_approve calls; policyConfigId: the shared version gate every seal_approve reads.
 // All three come from the package's recorded deployments.
 const { originalId, publishedAt, policyConfigId } = sealPoliciesDeployment('testnet')
-// The access_gate package that seal_policies links: with it set, `encrypt('nft-gate', …)` reads the gate
+// The access_gate package that sealed_storage links: with it set, `encrypt('nft-gate', …)` reads the gate
 // first and refuses one that is not a Gate of that package, or whose passes are transferable.
 const accessGateOriginalId = accessGateDeployment('testnet').originalId
 

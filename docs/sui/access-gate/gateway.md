@@ -28,11 +28,11 @@ Both query the chain over Sui **gRPC**.
 
 The proof travels as `Authorization: Bearer <token>` (or `X-Access-Proof`), where the token is
 `base64(JSON { address, nonce, signature, consumeDigest? })`. The signature is a Sui personal message
-(protocol **`nft-gate:access:v2`**) that binds the proof to this gateway, so a proof made for another
+(protocol **`access-gate-gateway:access:v3`**) that binds the proof to this gateway, so a proof made for another
 gateway, gate or network is useless here:
 
 ```text
-nft-gate:access:v2
+access-gate-gateway:access:v3
 origin:<GATEWAY_ORIGIN>
 gate:<GATE_ID>
 network:<NETWORK>

@@ -42,7 +42,7 @@ No `gen:api` (TypeDoc) step. The only prebuild is `gen:onchain` (run automatical
   `lint:js`, `lint:html`), `build`, `check:licenses`; the image build also runs
   `scripts/check-csp-inline.mjs` against the CSP in the `Dockerfile`.
 - **On-chain ids are checked, not generated.** Hand-written pages carry the testnet ids of
-  `access_gate` / `seal_policies` (`docs/sui/index.md` table) and the Seal key-server object ids.
+  `access_gate` / `sealed_storage` (`docs/sui/index.md` table) and the Seal key-server object ids.
   `scripts/check-onchain-ids.mjs` (part of `build`) fails when any 32-byte id in a page differs from the
   `deployments` of `@meddleware/access-gate-client` / `@meddleware/sealed-storage-client` or when the table lacks
   one; the key-server ids are listed in the script's `OTHER_IDS`. After a republication: bump the clients,

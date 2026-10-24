@@ -21,13 +21,13 @@ functions, events, abort codes) is maintained with the package and imported into
 | Repository | Move package | Modules | Depends on | On-chain docs |
 | --- | --- | --- | --- | --- |
 | [`access-gate-sui`](https://github.com/meddleware-org/access-gate-sui) | `access_gate` | `access_gate` — gates, passes (`AccessNFT` / `SoulboundAccessNFT`), purchase with platform commission, single-use `consume`, gate policies | Sui framework only | [overview](/sui/onchain/access-gate/overview) · [dev guide](/sui/onchain/access-gate/dev-guide) · [API](/sui/onchain/access-gate/api-reference) |
-| [`sealed-storage-sui`](https://github.com/meddleware-org/sealed-storage-sui) | `seal_policies` | `nft_gate` and `timelock` (Seal `seal_approve*` policies); `sealed_content` (discovery registry, not a policy) | `access_gate` (git, commit-pinned) | [overview](/sui/onchain/sealed-storage/overview) · [dev guide](/sui/onchain/sealed-storage/dev-guide) · [API](/sui/onchain/sealed-storage/api-reference) |
+| [`sealed-storage-sui`](https://github.com/meddleware-org/sealed-storage-sui) | `sealed_storage` | `nft_gate` and `timelock` (Seal `seal_approve*` policies); `sealed_content` (discovery registry, not a policy) | `access_gate` (git, commit-pinned) | [overview](/sui/onchain/sealed-storage/overview) · [dev guide](/sui/onchain/sealed-storage/dev-guide) · [API](/sui/onchain/sealed-storage/api-reference) |
 | [`token-issuance-template-sui`](https://github.com/meddleware-org/token-issuance-template-sui) | `sui_token_template` | `sui_token_template` — one coin per publish via the coin registry | Sui framework only | [overview](/sui/onchain/token-issuance/overview) · [dev guide](/sui/onchain/token-issuance/dev-guide) · [API](/sui/onchain/token-issuance/api-reference) |
 
 ```text
 access_gate            ← passes, gates, commission (PlatformConfig)
    ▲
-   └── seal_policies   ← nft_gate reads a Gate + pass; timelock reads Clock 0x6
+   └── sealed_storage   ← nft_gate reads a Gate + pass; timelock reads Clock 0x6
 
 sui_token_template     ← not a shared deployment: each token is its own package,
                          published from the user's wallet by the token issuance
@@ -38,7 +38,7 @@ sui_token_template     ← not a shared deployment: each token is its own packag
 | Package | Original ID (types, events) | Published at (call targets) | Shared objects |
 | --- | --- | --- | --- |
 | `access_gate` | `0xd7ddaa94b74330979b2b618fc81206d160a264f1c9ca148a77fa2144301388c9` | same (v1) | `PlatformConfig` `0x3f81489df58233d96798f34ad44de325e1b4df7e4d615affe72ca181969ee7b5` |
-| `seal_policies` | `0x0c8f73490b14836e6a7a724fb46b242cb061d04a5f193fd637159997f8a1773d` | same (v1) | `PolicyConfig` `0xee0403ba15c250223527150d147f29bedfb1ec46bb2282c341be462ff0ad7d1a` |
+| `sealed_storage` | `0x0c8f73490b14836e6a7a724fb46b242cb061d04a5f193fd637159997f8a1773d` | same (v1) | `PolicyConfig` `0xee0403ba15c250223527150d147f29bedfb1ec46bb2282c341be462ff0ad7d1a` |
 
 Type strings, event filters and Seal identities use the original ID; Move calls use the latest
 published-at. Every gated call also passes the package's shared version object (`PlatformConfig`,
@@ -53,7 +53,7 @@ object. A
 breaking change is a new package with a new original ID; what was created on the old one stays bound
 to it.
 
-Superseded testnet packages (`access_gate` `0x1a81ca…` and `0x0bedd0…`, `seal_policies` `0x42cc18…`
+Superseded testnet packages (`access_gate` `0x1a81ca…` and `0x0bedd0…`, `sealed_storage` `0x42cc18…`
 and `0x9f0563…`, replaced on 2026-10-02 by the version-gated packages) keep serving what was created on
 them; new gates and content use the IDs above.
 

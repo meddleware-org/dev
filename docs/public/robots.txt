@@ -1,0 +1,4 @@
+# dev-site: documentation for people and agents (Content Signals below).
+User-agent: *
+Content-Signal: search=yes, ai-input=yes
+Allow: /

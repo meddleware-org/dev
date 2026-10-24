@@ -153,4 +153,4 @@ function describeFailure(outcome: { status: { success: boolean; error?: any } })
 
 Full abort-code tables live in each package's API reference:
 [`access_gate`](/sui/onchain/access-gate/api-reference) ·
-[`seal_policies`](/sui/onchain/sealed-storage/api-reference).
+[`sealed_storage`](/sui/onchain/sealed-storage/api-reference).
