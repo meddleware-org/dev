@@ -5,7 +5,7 @@ on:
       - "v*"
 
 env:
-  IMAGE: dev
+  IMAGE: dev-site
 
 # VitePress developer documentation site.
 # Publishes both:

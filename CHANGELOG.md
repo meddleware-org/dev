@@ -93,6 +93,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.28] - 2026-10-24
+
+### Fixed
+
+- The image publish workflow pushed to the old repository name (`dev`); it now publishes `dev-site`, the name `config/images.yaml` pins. No code change.
+
 ## [0.0.27] - 2026-10-24
 
 ### Changed
