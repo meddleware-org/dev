@@ -1,6 +1,6 @@
 {
   "name": "@meddleware/dev-site",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "description": "Meddleware developer documentation site (dev.meddleware.co.uk) — VitePress. Integration guides, design system usage, and Sui development patterns.",
   "homepage": "https://dev.meddleware.co.uk/",
   "author": "Meddleware <dev@meddleware.co.uk>",
@@ -46,16 +46,16 @@
   },
   "dependencies": {
     "@meddleware/design-tokens": "^0.1.10",
-    "@meddleware/ui": "^0.1.31"
+    "@meddleware/ui": "^0.1.33"
   },
   "devDependencies": {
-    "@meddleware/access-gate-client": "^0.0.9",
-    "@meddleware/access-gate-sui": "^0.0.7",
-    "@meddleware/access-gate-gateway-client": "^0.0.19",
+    "@meddleware/access-gate-client": "^0.0.11",
+    "@meddleware/access-gate-sui": "^0.0.9",
+    "@meddleware/access-gate-gateway-client": "^0.0.20",
     "@meddleware/sealed-storage-client": "^0.0.24",
     "@meddleware/sealed-storage-sui": "^0.0.9",
     "@meddleware/token-issuance-template-sui": "^1.0.10",
-    "@meddleware/wallet-adapter": "^0.0.17",
+    "@meddleware/wallet-adapter": "^0.0.18",
     "@meddleware/walrus-storage-client": "^0.0.31",
     "@mysten/seal": "^1.5.0",
     "@mysten/sui": "^2.36.0",

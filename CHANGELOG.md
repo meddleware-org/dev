@@ -93,6 +93,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.29] - 2026-10-24
+
+### Changed
+
+- Dependencies on the latest package releases (`access-gate-sui` 0.0.9, `access-gate-client` 0.0.11, `access-gate-gateway-client` 0.0.20, `ui` 0.1.33, `wallet-adapter` 0.0.18); pages name the access-gate gateway `access-gate-gateway` (workspace naming convention, ADR-0003).
+
 ## [0.0.28] - 2026-10-24
 
 ### Fixed
