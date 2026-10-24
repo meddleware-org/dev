@@ -1,4 +1,4 @@
-# Deploy the NFT gate gateway
+# Deploy the access-gate gateway
 
 [`access-gate-gateway`](https://github.com/meddleware-org/access-gate-gateway) is a generic **NFT-gated reverse proxy**:
 put it in front of any HTTP service (an upload relay, a website, an API) and only holders of an

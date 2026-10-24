@@ -93,6 +93,12 @@ Initial release. Developer documentation site at `dev.meddleware.co.uk` covering
 - Sui development: environment setup, PTB patterns
 - Per-service integration guides: Walrus Storage, Sealed Storage, Access Gate, DAO
 
+## [0.0.30] - 2026-10-24
+
+### Fixed
+
+- The gateway guide is titled "Deploy the access-gate gateway" (it still said "NFT gate gateway").
+
 ## [0.0.29] - 2026-10-24
 
 ### Changed
